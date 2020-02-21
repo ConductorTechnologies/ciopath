@@ -7,13 +7,13 @@ import os
 import unittest
 import mock
 
-sys.modules["glob"] = __import__("conductor.native.lib.mocks.glob", fromlist=["dummy"])
+sys.modules["glob"] = __import__("mocks.glob", fromlist=["dummy"])
 
 import glob
 
-from conductor.native.lib.gpath_list import PathList
-from conductor.native.lib.sequence import Sequence
-from conductor.native.lib.gpath import Path
+from conductor.core.gpath_list import PathList
+from conductor.core.sequence import Sequence
+from conductor.core.gpath import Path
 
 
 NATIVE_MODULE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -2,14 +2,14 @@
 
    isort:skip_file
 """
-from conductor.native.lib.gpath import Path
+from conductor.core.gpath import Path
 import os
 import sys
 import mock
 import unittest
 
 
-sys.modules["glob"] = __import__("conductor.native.lib.mocks.glob", fromlist=["dummy"])
+sys.modules["glob"] = __import__("mocks.glob", fromlist=["dummy"])
 
 
 NATIVE_MODULE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
