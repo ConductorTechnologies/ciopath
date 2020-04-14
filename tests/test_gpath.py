@@ -12,11 +12,6 @@ import unittest
 sys.modules["glob"] = __import__("mocks.glob", fromlist=["dummy"])
 
 
-NATIVE_MODULE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if NATIVE_MODULE not in sys.path:
-    sys.path.insert(0, NATIVE_MODULE)
-
-
 class BadInputTest(unittest.TestCase):
     def test_badly_formed_drive_letter(self):
         with self.assertRaises(ValueError):
@@ -129,12 +124,14 @@ class PathExpansionTest(unittest.TestCase):
     def test_posix_two_var_input(self):
         with mock.patch.dict("os.environ", self.env):
             self.p = Path("$SHOT/a/b/$DEPT/c")
-            self.assertEqual(self.p.posix_path(), "/metropolis/shot01/a/b/texturing/c")
+            self.assertEqual(self.p.posix_path(),
+                             "/metropolis/shot01/a/b/texturing/c")
 
     def test_windows_var_input(self):
         with mock.patch.dict("os.environ", self.env):
             self.p = Path("$HOME\\a\\b\\c")
-            self.assertEqual(self.p.windows_path(), "\\users\\joebloggs\\a\\b\\c")
+            self.assertEqual(self.p.windows_path(),
+                             "\\users\\joebloggs\\a\\b\\c")
             self.assertEqual(self.p.posix_path(), "/users/joebloggs/a/b/c")
 
     def test_tilde_no_expand(self):
@@ -182,14 +179,16 @@ class PathContextExpansionTest(unittest.TestCase):
 
     def test_path_replaces_multiple_context(self):
         self.p = Path("$ROOT_DIR/$BAR_FLY1_/thefile.jpg", context=self.context)
-        self.assertEqual(self.p.posix_path(), "/some/root/bar_fly1_val/thefile.jpg")
+        self.assertEqual(self.p.posix_path(),
+                         "/some/root/bar_fly1_val/thefile.jpg")
 
     def test_path_context_overrides_env(self):
         self.p = Path("$HOME/thefile.jpg", context=self.context)
         self.assertEqual(self.p.posix_path(), "/users/janedoe/thefile.jpg")
 
     def test_path_leave_unknown_variable_in_tact(self):
-        self.p = Path("$ROOT_DIR/$BAR_FLY1_/$FOO/thefile.$F.jpg", context=self.context)
+        self.p = Path("$ROOT_DIR/$BAR_FLY1_/$FOO/thefile.$F.jpg",
+                      context=self.context)
         self.assertEqual(
             self.p.posix_path(), "/some/root/bar_fly1_val/fooval/thefile.$F.jpg"
         )
@@ -275,6 +274,27 @@ class RelativePathTest(unittest.TestCase):
     def test_rel_path_does_not_raise(self):
         p = Path("a/b/c")
         self.assertEqual(p.posix_path(), "a/b/c")
+
+
+class EqualityTests(unittest.TestCase):
+    def test_paths_equal(self):
+        p1 = Path("a/b/c")
+        p2 = Path("a/b/c")
+        self.assertTrue(p1 == p2)
+
+    def test_same_object_equal(self):
+        p1 = Path("a/b/c")
+        self.assertTrue(p1 == p1)
+
+    def test_different_paths_equal_false(self):
+        p1 = Path("a/b/c")
+        p2 = Path("a/b/d")
+        self.assertFalse(p1 == p2)
+
+    def test_paths_not_equal(self):
+        p1 = Path("a/b/c")
+        p2 = Path("a/b/d")
+        self.assertTrue(p1 != p2)
 
 
 if __name__ == "__main__":

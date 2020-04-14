@@ -2,24 +2,23 @@
 
    isort:skip_file
 """
+ 
 import sys
 import os
 import unittest
 import mock
 
+# Make sure the mocked version of glob is in the sys modules
 sys.modules["glob"] = __import__("mocks.glob", fromlist=["dummy"])
 
-import glob
-
+# Import gpath_list and anything else that may use glob which will NOT import
+# the real glob because it's already here.
 from conductor.core.gpath_list import PathList
-from conductor.core.sequence import Sequence
 from conductor.core.gpath import Path
+from conductor.core.sequence import Sequence
 
-
-NATIVE_MODULE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if NATIVE_MODULE not in sys.path:
-    sys.path.insert(0, NATIVE_MODULE)
-
+# Now import glob because we need to populate it.
+import glob # isort:skip
 
 class PathListTest(unittest.TestCase):
     def setUp(self):
@@ -32,6 +31,10 @@ class PathListTest(unittest.TestCase):
     def test_init_empty(self):
         d = PathList()
         self.assertEqual(list(d), [])
+
+    def test_init_with_args(self):
+        d = PathList("/a/file2", "/a/file3")
+        self.assertEqual(len(d), 2)
 
     def test_adds_paths(self):
         d = PathList()
@@ -204,7 +207,8 @@ class PathListTest(unittest.TestCase):
 
     def test_common_path_when_duplicate_entries_of_single_path(self):
         d = PathList()
-        files = ["/users/joebloggs/tmp/foo.txt", "/users/joebloggs/tmp/foo.txt"]
+        files = ["/users/joebloggs/tmp/foo.txt",
+                 "/users/joebloggs/tmp/foo.txt"]
         d.add(*files)
         self.assertEqual(d.common_path(), Path("/users/joebloggs/tmp/foo.txt"))
 
