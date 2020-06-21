@@ -8,6 +8,11 @@ import os
 import unittest
 import mock
 
+SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
+if SRC not in sys.path:
+    sys.path.insert(0, SRC)
+
+
 # Make sure the mocked version of glob is in the sys modules
 sys.modules["glob"] = __import__("mocks.glob", fromlist=["dummy"])
 
