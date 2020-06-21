@@ -13,9 +13,9 @@ sys.modules["glob"] = __import__("mocks.glob", fromlist=["dummy"])
 
 # Import gpath_list and anything else that may use glob which will NOT import
 # the real glob because it's already here.
-from conductor.core.gpath_list import PathList
-from conductor.core.gpath import Path
-from conductor.core.sequence import Sequence
+from ciocore.gpath_list import PathList
+from ciocore.gpath import Path
+from ciocore.sequence import Sequence
 
 # Now import glob because we need to populate it.
 import glob # isort:skip

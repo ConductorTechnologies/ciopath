@@ -2,7 +2,7 @@
 
    isort:skip_file
 """
-from conductor.core.gpath import Path
+from ciocore.gpath import Path
 import os
 import sys
 import mock
