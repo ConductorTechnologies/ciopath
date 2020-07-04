@@ -51,6 +51,18 @@ class PathList(object):
         self._clean = False
         self._current = 0
 
+    def remove(self, *paths):
+        """
+        Replace the underlying list with a filtered list. 
+
+        No deduplication happens yet and the list is marked dirty.
+        """
+        removals = PathList(*paths)
+        result = [p for p in self._entries if p not in removals]
+        self._entries = result
+        self._clean = False
+        self._current = 0
+
     def _deduplicate(self):
         """Deduplicate if it has become dirty.
 

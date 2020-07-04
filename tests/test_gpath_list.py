@@ -56,6 +56,48 @@ class PathListTest(unittest.TestCase):
         d.add("/a/file1", "/a/file2", Path("/a/file3"))
         self.assertEqual(len(d), 3)
 
+
+    # remove
+    def test_removes_string(self):
+        d = PathList()
+        d.add("/a/file1", "/a/file2", "/a/file3")
+        d.remove("/a/file2")
+        self.assertEqual(len(d), 2)
+
+    def test_removes_path(self):
+        d = PathList()
+        d.add("/a/file1", "/a/file2", "/a/file3")
+        d.remove(Path("/a/file2"))
+        self.assertEqual(len(d), 2)
+        self.assertEqual( list(d)[1],  Path("/a/file3"))
+
+    def test_removes_many(self):
+        d = PathList()
+        d.add("/a/file1", "/a/file2", "/a/file3")
+        d.remove("/a/file2", "/a/file3")
+        self.assertEqual(len(d), 1)
+
+    def test_removes_paths_when_list_contains_duplicates(self):
+        d = PathList()
+        d.add("/a/file1", "/a/file2", "/a/file3", "/a/file2")
+        d.remove("/a/file1")
+        for p in d:
+            print p.posix_path()
+        self.assertEqual(len(d), 2)
+
+    def test_removes_duplicate_when_list_contains_duplicates(self):
+        d = PathList()
+        d.add("/a/file1", "/a/file2", "/a/file3", "/a/file2", "/a/file3")
+        d.remove("/a/file2")
+        self.assertEqual(len(d), 2)
+ 
+    def test_does_not_deduplicate_internally_on_removal(self):
+        # deduplication is lazy - happens on access
+        d = PathList()
+        d.add("/a/file1", "/a/file2", "/a/file3", "/a/file2", "/a/file3")
+        d.remove("/a/file2")
+        self.assertEqual(len(d._entries), 3)
+
     # just want to make sure expansion works here
     # even though it's tested in gpath_test
     def test_expand_tilde(self):
