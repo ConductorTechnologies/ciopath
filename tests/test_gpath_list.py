@@ -223,13 +223,15 @@ class PathListTest(unittest.TestCase):
     def test_common_path_drive_letter(self):
         d = PathList()
         files = [
-            "C://users/joebloggs/hello/foo.txt",
-            "C://users/joebloggs/tmp/modelman.jpg",
-            "C://users/joebloggs/tmp/ration.cpp",
-            "C://users/joebloggs/tmp/bill.project",
+            "C:/users/joebloggs/hello/foo.txt",
+            "C:/users/joebloggs/tmp/modelman.jpg",
+            "C:/users/joebloggs/tmp/ration.cpp",
+            "C:/users/joebloggs/tmp/bill.project",
         ]
         d.add(*files)
-        self.assertEqual(d.common_path(), Path("C://users/joebloggs"))
+        print "PPP", d.common_path().all_components
+        print "PPP", d.common_path().posix_path()
+        self.assertEqual(d.common_path(), Path("C:/users/joebloggs"))
 
     # This is not right. There is no common path if drive letters
     # are involved. Need to revisit, and hope that in the
@@ -238,10 +240,10 @@ class PathListTest(unittest.TestCase):
     def test_common_different_drive_letter(self):
         d = PathList()
         files = [
-            "D://users/joebloggs/tmp/foo.txt",
-            "D://users/joebloggs/tmp/modelman.jpg",
-            "C://users/joebloggs/tmp/ration.cpp",
-            "C://users/joebloggs/tmp/bill.project",
+            "D:/users/joebloggs/tmp/foo.txt",
+            "D:/users/joebloggs/tmp/modelman.jpg",
+            "C:/users/joebloggs/tmp/ration.cpp",
+            "C:/users/joebloggs/tmp/bill.project",
         ]
         d.add(*files)
         self.assertEqual(d.common_path(), Path("/"))

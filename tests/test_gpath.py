@@ -30,7 +30,6 @@ class BadInputTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.p = Path("A:a\\b:c")
 
-
 class RootPath(unittest.TestCase):
     def test_root_path(self):
         self.p = Path("/")
@@ -279,6 +278,12 @@ class RelativePathTest(unittest.TestCase):
     def test_rel_path_does_not_raise(self):
         p = Path("a/b/c")
         self.assertEqual(p.posix_path(), "a/b/c")
+
+    def test_rel_path_cannot_have_drive_letter(self):
+        with self.assertRaises(ValueError):
+            p = Path("C:a\\b\\c")
+        # self.assertEqual(p.posix_path(), "a/b/c")
+
 
 
 class EqualityTests(unittest.TestCase):

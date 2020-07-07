@@ -2,7 +2,7 @@ import os
 
 import re
 
-RX_LETTER = re.compile(r"^([a-zA-Z]):")
+RX_LETTER = re.compile(r"^([a-zA-Z]):[\\/]+")
 RX_DOLLAR_VAR = re.compile(r"\$([A-Za-z][A-Z,a-z0-9_]+)")
 
 
@@ -42,6 +42,7 @@ class Path(object):
         Also expand, env vars and user unless explicitly told not to with the
         no_expand option. 
         """
+        self._drive_letter = None
 
         if not path:
             raise ValueError("Empty path")
@@ -60,17 +61,20 @@ class Path(object):
                 path = os.path.expanduser(os.path.expandvars(path))
 
             match = RX_LETTER.match(path)
-            self._drive_letter = match.group(1) if match else None
-            remainder = re.sub(RX_LETTER, "", path)
+            # print "match", match, match.group(1) if match else None
+            if match:
+                self._drive_letter = match.group(1)
+                path = path.split(":", 1)[1]
+    
+            self._absolute = path[0] in ["/", "\\"]
 
-            self._absolute = remainder[0] in ["/", "\\"]
-
-            if ":" in remainder:
-                raise ValueError("Bad characters in path '{}'".format(remainder))
+            if ":" in path:
+                raise ValueError("Bad characters in path '{}'".format(path))
 
             self._components = _normalize_dots(
-                [s for s in re.split("/|\\\\", remainder) if s]
+                [s for s in re.split("/|\\\\", path) if s]
             )
+            # print self._components
 
         self._depth = len(self._components)
 
@@ -79,8 +83,8 @@ class Path(object):
         result = sep.join(self._components)
         if self._absolute:
             result = "{}{}".format(sep, result)
-        if with_drive_letter and self._drive_letter:
-            result = "{}:{}".format(self._drive_letter, result)
+            if with_drive_letter and self._drive_letter:
+                result = "{}:{}".format(self._drive_letter, result)
         return result
 
     def posix_path(self, **kw):

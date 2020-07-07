@@ -109,13 +109,24 @@ class PathList(object):
         if not self._entries:
             return None
 
+        absolute =  list(self._entries)[0].absolute
+
         def _all_the_same(rhs):
             return all(n == rhs[0] for n in rhs[1:])
 
         levels = zip(*[p.all_components for p in self._entries])
 
         common = [x[0] for x in takewhile(_all_the_same, levels)]
-        return Path(common or "/")
+
+        if not len(common):
+            return Path("/")
+        elif  common[0].endswith(":"):
+            return Path("/".join(common))
+        elif absolute: 
+            return Path("/"+"/".join(common))
+        return Path("/".join(common))
+
+       
 
     def glob(self):
         """Glob expansion for entries containing globbable characters.
