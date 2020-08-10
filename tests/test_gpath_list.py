@@ -7,6 +7,7 @@ import sys
 import os
 import unittest
 import mock
+from mock import patch
 
 SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
 if SRC not in sys.path:
@@ -98,6 +99,7 @@ class PathListTest(unittest.TestCase):
         d.remove("/a/file2")
         self.assertEqual(len(d._entries), 3)
 
+
     # just want to make sure expansion works here
     # even though it's tested in gpath_test
     def test_expand_tilde(self):
@@ -141,13 +143,13 @@ class PathListTest(unittest.TestCase):
     def test_dedup_cleaned_on_access_iter(self):
         d = PathList()
         d.add("/file1")
-        ls = list(d)
+        # ls = list(d)
         self.assertTrue(d._clean)
 
     def test_dedup_cleaned_on_access_len(self):
         d = PathList()
         d.add("/file1")
-        ls = len(d)
+        # ls = len(d)
         self.assertTrue(d._clean)
 
     def test_dedup_cleaned_on_access_next(self):
@@ -338,7 +340,79 @@ class PathListTest(unittest.TestCase):
         d.add(bad_glob)
         d.glob()
         self.assertEqual(list(d)[0].posix_path(), bad_glob)
+ 
+    def test_empty_list_is_falsy(self):
+        self.assertFalse(PathList())
 
+    def test_populated_list_is_truthy(self):
+        self.assertTrue(PathList("/file"))
+
+
+class MissingFilesTest(unittest.TestCase):
+
+    @staticmethod
+    def side_effect(arg):
+        if "missing" in arg: 
+            return False
+        else:
+            return True
+
+    def setUp(self):
+
+        patcher = patch('os.path.exists')
+        self.mock_exists = patcher.start()
+        self.mock_exists.side_effect = MissingFilesTest.side_effect
+        self.addCleanup(patcher.stop)
+
+
+    def test_remove_no_missing_file(self):
+        d = PathList()
+        files = ["/tmp/foo.txt", "/tmp/bar.txt"]
+        d.add(*files)
+        self.assertEqual(len(d), 2)
+        d.remove_missing()
+        self.assertEqual(len(d), 2)
+
+    def test_remove_one_missing_file(self):
+        d = PathList()
+        files = ["/tmp/missing.txt", "/tmp/foo.txt", "/tmp/bar.txt"]
+        d.add(*files)
+        self.assertEqual(len(d), 3)
+        d.remove_missing()
+        self.assertEqual(len(d), 2)
+
+    def test_remove_many_missing_file(self):
+        d = PathList()
+        files = ["/tmp/missing.txt", "/tmp/foo.txt", "/tmp/bar.txt", "/tmp/missing2.txt", "/tmp/missing3.txt"]
+        d.add(*files)
+        self.assertEqual(len(d), 5)
+        d.remove_missing()
+        self.assertEqual(len(d), 2)
+
+    def test_remove_when_all_files_missing(self):
+        d = PathList()
+        files = ["/tmp/missing.txt", "/tmp/missing2.txt", "/tmp/missing3.txt"]
+        d.add(*files)
+        self.assertEqual(len(d), 3)
+        d.remove_missing()
+        self.assertFalse(d)
+
+    def test_remove_missing_when_dups_given(self):
+        d = PathList()
+        files = ["/tmp/missing", "/tmp/foo", "/tmp/bar",  "/tmp/foo", "/tmp/missing2", "/tmp/missing"]
+        d.add(*files)
+        self.assertEqual(len(d), 4)
+        d.remove_missing()
+        self.assertEqual(len(d), 2)
+
+
+    def test_dont_remove_globbable_files(self):
+        d = PathList()
+        files = ["/tmp/foo","/tmp/missing*", "/tmp/missing.[0-9]", "/tmp/missing.????.exr"]
+        d.add(*files)
+        self.assertEqual(len(d), 4)
+        d.remove_missing()
+        self.assertEqual(len(d), 4)
 
 if __name__ == "__main__":
     unittest.main()

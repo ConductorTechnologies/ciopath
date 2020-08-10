@@ -186,3 +186,14 @@ class PathList(object):
         """
         self._deduplicate()
         return len(self._entries)
+
+    def remove_missing(self):
+        missing = PathList()
+        for path in self._entries:
+            pp = path.posix_path()
+            if GLOBBABLE_REGEX.search(pp):
+                continue
+            if not os.path.exists(pp):
+                missing.add(path)
+        if  missing:
+            self.remove(*missing)
