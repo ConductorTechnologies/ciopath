@@ -143,13 +143,13 @@ class PathListTest(unittest.TestCase):
     def test_dedup_cleaned_on_access_iter(self):
         d = PathList()
         d.add("/file1")
-        # ls = list(d)
+        ls = list(d)
         self.assertTrue(d._clean)
 
     def test_dedup_cleaned_on_access_len(self):
         d = PathList()
         d.add("/file1")
-        # ls = len(d)
+        ls = len(d)
         self.assertTrue(d._clean)
 
     def test_dedup_cleaned_on_access_next(self):
