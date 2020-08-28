@@ -74,7 +74,6 @@ class Path(object):
             self._components = _normalize_dots(
                 [s for s in re.split("/|\\\\", path) if s]
             )
-            # print self._components
 
         self._depth = len(self._components)
 
