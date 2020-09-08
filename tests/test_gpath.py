@@ -18,18 +18,11 @@ sys.modules["glob"] = __import__("mocks.glob", fromlist=["dummy"])
 
 
 class BadInputTest(unittest.TestCase):
-    def test_badly_formed_drive_letter(self):
-        with self.assertRaises(ValueError):
-            self.p = Path("CZ:\\a\\b\\c")
 
     def test_empty_input(self):
         with self.assertRaises(ValueError):
             self.p = Path("")
-
-    def test_many_colons_input(self):
-        with self.assertRaises(ValueError):
-            self.p = Path("A:a\\b:c")
-
+            
 class RootPath(unittest.TestCase):
     def test_root_path(self):
         self.p = Path("/")

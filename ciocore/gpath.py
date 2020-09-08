@@ -68,9 +68,6 @@ class Path(object):
     
             self._absolute = path[0] in ["/", "\\"]
 
-            if ":" in path:
-                raise ValueError("Bad characters in path '{}'".format(path))
-
             self._components = _normalize_dots(
                 [s for s in re.split("/|\\\\", path) if s]
             )
