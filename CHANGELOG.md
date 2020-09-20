@@ -1,2 +1,16 @@
+### Version:0.1.0 -- 20 Sep 2020
+
+* Python 2 and 3 compatibility. [361ff3d]
+* Gpath allow colons in paths. [320c3ce]
+* Fix accidentally commented lines in test. [fa7c7a4]
+* Adds remove_missing files method to gpath. [c41fc42]
+* Repair some path list issues found while adding remove method. [5e527a1]
+* Adds a remove method to pathlist with tests. [9821af4]
+* Expander path list enhancements (#5)
+* init path list with paths
+* expander expands envvars
+* test equality with ==
+* Initial commit. [b41b155]
+
  
 --
