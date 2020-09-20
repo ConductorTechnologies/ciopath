@@ -1,3 +1,5 @@
+from future.utils import python_2_unicode_compatible
+
 import os
 
 import re
@@ -83,12 +85,12 @@ class Path(object):
                 result = "{}:{}".format(self._drive_letter, result)
         return result
 
-    def posix_path(self, **kw):
+    def fslash(self, **kw):
         """Path with forward slashes. Can include drive letter."""
         with_drive_letter = kw.get("with_drive", True)
         return self._construct_path("/", with_drive_letter)
 
-    def windows_path(self, **kw):
+    def bslash(self, **kw):
         """Path with back slashes. Can include drive letter."""
         with_drive_letter = kw.get("with_drive", True)
         return self._construct_path("\\", with_drive_letter)
@@ -97,22 +99,26 @@ class Path(object):
         """Path with slashes for current os. Can include drive letter."""
         with_drive = kw.get("with_drive", True)
         if os.name == "nt":
-            return self.windows_path(with_drive=with_drive)
-        return self.posix_path(with_drive=with_drive)
+            return self.bslash(with_drive=with_drive)
+        return self.fslash(with_drive=with_drive)
+
+    def __str__(self):
+        """Same as fslash, with_drive=True"""
+        return self._construct_path("/", True)
 
     def startswith(self, path):
-        return self.posix_path().startswith(path.posix_path())
+        return self.fslash().startswith(path.fslash())
 
     def endswith(self, suffix):
-        return self.posix_path().endswith(suffix)
+        return self.fslash().endswith(suffix)
 
     def __len__(self):
-        return len(self.posix_path())
+        return len(self.fslash())
 
     def __eq__(self, rhs):
         if not isinstance(rhs, Path):
             raise NotImplementedError
-        return self.posix_path() == rhs.posix_path()
+        return self.fslash() == rhs.fslash()
 
     def __ne__(self, rhs):
         return not (self == rhs)

@@ -19,9 +19,9 @@ sys.modules["glob"] = __import__("mocks.glob", fromlist=["dummy"])
 
 # Import gpath_list and anything else that may use glob which will NOT import
 # the real glob because it's already here.
-from ciocore.gpath_list import PathList
-from ciocore.gpath import Path
-from ciocore.sequence import Sequence
+from ciopath.gpath_list import PathList
+from ciopath.gpath import Path
+# from cioseq.sequence import Sequence
 
 # Now import glob because we need to populate it.
 import glob # isort:skip
@@ -33,6 +33,52 @@ class PathListTest(unittest.TestCase):
             "SHOT": "/metropolis/shot01",
             "DEPT": "texturing",
         }
+
+        self.other_files_on_disk = [
+         '/other/file.0001.exr',
+         '/other/file.0002.exr',
+         '/other/file.0003.exr',
+         '/other/file.0004.exr',
+         '/other/file.0005.exr',
+         '/other/file.0006.exr',
+         '/other/file.0007.exr',
+         '/other/file.0008.exr',
+         '/other/file.0009.exr',
+         '/other/file.0010.exr',
+         '/other/file.0011.exr',
+         '/other/file.0012.exr',
+         '/other/file.0013.exr',
+         '/other/file.0014.exr',
+         '/other/file.0015.exr',
+         '/other/file.0016.exr',
+         '/other/file.0017.exr',
+         '/other/file.0018.exr',
+         '/other/file.0019.exr',
+         '/other/file.0020.exr']
+
+        self.some_files_on_disk = [
+         '/some/file.0001.exr',
+         '/some/file.0002.exr',
+         '/some/file.0003.exr',
+         '/some/file.0004.exr',
+         '/some/file.0005.exr',
+         '/some/file.0006.exr',
+         '/some/file.0007.exr',
+         '/some/file.0008.exr',
+         '/some/file.0009.exr',
+         '/some/file.0010.exr',
+         '/some/file.0011.exr',
+         '/some/file.0012.exr',
+         '/some/file.0013.exr',
+         '/some/file.0014.exr',
+         '/some/file.0015.exr',
+         '/some/file.0016.exr',
+         '/some/file.0017.exr',
+         '/some/file.0018.exr',
+         '/some/file.0019.exr',
+         '/some/file.0020.exr']
+
+
 
     def test_init_empty(self):
         d = PathList()
@@ -82,8 +128,6 @@ class PathListTest(unittest.TestCase):
         d = PathList()
         d.add("/a/file1", "/a/file2", "/a/file3", "/a/file2")
         d.remove("/a/file1")
-        for p in d:
-            print p.posix_path()
         self.assertEqual(len(d), 2)
 
     def test_removes_duplicate_when_list_contains_duplicates(self):
@@ -231,8 +275,6 @@ class PathListTest(unittest.TestCase):
             "C:/users/joebloggs/tmp/bill.project",
         ]
         d.add(*files)
-        print "PPP", d.common_path().all_components
-        print "PPP", d.common_path().posix_path()
         self.assertEqual(d.common_path(), Path("C:/users/joebloggs"))
 
     # This is not right. There is no common path if drive letters
@@ -274,7 +316,7 @@ class PathListTest(unittest.TestCase):
         self.assertEqual(d.common_path(), Path("/"))
 
     def test_glob_when_files_match_with_asterisk(self):
-        glob.populate(Sequence.create("1-20").expand("/some/file.####.exr"))
+        glob.populate(self.some_files_on_disk)
         d = PathList()
         file = "/some/file.*.exr"
         d.add(file)
@@ -282,7 +324,7 @@ class PathListTest(unittest.TestCase):
         self.assertEqual(len(d), 20)
 
     def test_glob_when_files_match_with_question_mark(self):
-        glob.populate(Sequence.create("1-20").expand("/some/file.####.exr"))
+        glob.populate(self.some_files_on_disk)
         d = PathList()
         file = "/some/file.00?0.exr"
         d.add(file)
@@ -290,7 +332,7 @@ class PathListTest(unittest.TestCase):
         self.assertEqual(len(d), 2)
 
     def test_glob_when_files_match_with_range(self):
-        glob.populate(Sequence.create("1-20").expand("/some/file.####.exr"))
+        glob.populate(self.some_files_on_disk)
         d = PathList()
         file = "/some/file.000[0-9].exr"
         d.add(file)
@@ -298,7 +340,7 @@ class PathListTest(unittest.TestCase):
         self.assertEqual(len(d), 9)
 
     def test_glob_dedups_when_many_files_match(self):
-        glob.populate(Sequence.create("1-20").expand("/some/file.####.exr"))
+        glob.populate(self.some_files_on_disk)
         d = PathList()
         files = ["/some/file.*.exr", "/some/*.exr"]
         d.add(*files)
@@ -306,7 +348,7 @@ class PathListTest(unittest.TestCase):
         self.assertEqual(len(d), 20)
 
     def test_glob_when_files_dont_match(self):
-        glob.populate(Sequence.create("1-20").expand("/other/file.####.exr"))
+        glob.populate(self.other_files_on_disk)
         d = PathList()
         file = "/some/file.*.exr"
         d.add(file)
@@ -320,7 +362,7 @@ class PathListTest(unittest.TestCase):
         self.assertEqual(type(a), Path)
 
     def test_glob_leaves_non_existent_unglobbable_entries_untouched(self):
-        glob.populate(Sequence.create("1-3").expand("/some/file.####.exr"))
+        glob.populate(self.some_files_on_disk[:3])
         d = PathList()
         d.add("/some/file.*.exr", "/other/file1.exr", "/other/file2.exr")
         d.glob()
@@ -332,14 +374,14 @@ class PathListTest(unittest.TestCase):
         d = PathList()
         d.add(bad_glob)
         d.glob()
-        self.assertEqual(list(d)[0].posix_path(), bad_glob)
+        self.assertEqual(list(d)[0].fslash(), bad_glob)
 
     def test_ignore_invalid_nonexistent_glob(self):
         bad_glob = "/path/to/Model[b-a]"
         d = PathList()
         d.add(bad_glob)
         d.glob()
-        self.assertEqual(list(d)[0].posix_path(), bad_glob)
+        self.assertEqual(list(d)[0].fslash(), bad_glob)
  
     def test_empty_list_is_falsy(self):
         self.assertFalse(PathList())

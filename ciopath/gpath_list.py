@@ -3,7 +3,8 @@ import re
 from itertools import takewhile
 import glob
 
-from ciocore.gpath import Path
+from ciopath.gpath import Path
+from builtins import object
 
 GLOBBABLE_REGEX = re.compile(r"\*|\?|\[")
 
@@ -145,10 +146,10 @@ class PathList(object):
         self._deduplicate()
         result = []
         for entry in self._entries:
-            pp = entry.posix_path()
+            pp = entry.fslash()
             if GLOBBABLE_REGEX.search(pp):
                 try:
-                    globs = glob.glob(entry.posix_path())
+                    globs = glob.glob(entry.fslash())
                     result += globs
                 except re.error:
                     result.append(pp)
@@ -166,7 +167,8 @@ class PathList(object):
         self._deduplicate()
         return iter(self._entries)
 
-    def next(self):
+    def __next__(self):
+    # def next(self):
         """Get the next element.
 
         Deduplicate just in time.
@@ -190,7 +192,7 @@ class PathList(object):
     def remove_missing(self):
         missing = PathList()
         for path in self._entries:
-            pp = path.posix_path()
+            pp = path.fslash()
             if GLOBBABLE_REGEX.search(pp):
                 continue
             if not os.path.exists(pp):
