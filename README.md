@@ -4,7 +4,7 @@ Object-oriented platform-transparent path manipulations
 ## Install
 
 ```bash
-pip install --upgrade ciopath
+pip install ciopath
 ```
 
 ## Usage
