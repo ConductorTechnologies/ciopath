@@ -323,5 +323,55 @@ class EqualityTests(unittest.TestCase):
         self.assertTrue(p1 != p2)
 
 
+class InitializeWithComponentsTests(unittest.TestCase):
+
+    def test_initialize_with_lettered_components(self):
+        p = Path(["C:","a", "b", "c"])
+        self.assertEqual(p.fslash(with_drive=True), "C:/a/b/c")
+
+    def test_initialize_with_backslash_unc_components(self):
+        p = Path(["\\","a", "b", "c"])
+        self.assertEqual(p.fslash(with_drive=True), "//a/b/c")
+
+    def test_initialize_with_fwslash_unc_components(self):
+        p = Path(["/","a", "b", "c"])
+        self.assertEqual(p.fslash(with_drive=True), "//a/b/c")
+
+    def test_initialize_with_unc_components(self):
+        p = Path(["/","a", "b", "c"])
+        self.assertEqual(p.bslash(with_drive=True), "\\\\a\\b\\c")
+
+class GetComponentsTests(unittest.TestCase):
+
+    def test_get_all_components(self):
+        p = Path("/a/b/c")
+        self.assertEqual(p.all_components, ["a","b","c"])
+
+    def test_get_all_components_with_drive(self):
+        p = Path("C:/a/b/c")
+        self.assertEqual(p.all_components, ["C:","a","b","c"])
+
+    def test_get_all_components_with_unc_fwslash(self):
+        p = Path("//a/b/c")
+        self.assertEqual(p.all_components, ["/","a","b","c"])
+
+    def test_get_all_components_with_unc_backslash(self):
+        p = Path("\\\\a\\b\\c")
+        self.assertEqual(p.all_components, ["/","a","b","c"])
+
+class UNCTests(unittest.TestCase):
+
+    def test_unc_root_with_drive(self):
+        p = Path("\\\\a\\b\\c")
+        self.assertEqual(p.fslash(with_drive=True), "//a/b/c")
+
+    def test_unc_root_with_drive(self):
+        p = Path("\\\\a\\b\\c")
+        self.assertEqual(p.fslash(with_drive=False), "/a/b/c")
+
+    def test_unc_root_with_forward(self):
+        p = Path("//a/b/c")
+        self.assertEqual(p.fslash(with_drive=True), "//a/b/c")
+
 if __name__ == "__main__":
     unittest.main()

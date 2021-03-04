@@ -1,10 +1,28 @@
+
+"""
+A platform independent representation of a path.
+
+It consists of a prefix and a list of components. Prefix may be:
+# None (posix)
+# C: (or any letter)
+# / (UNC)
+
+Components are the parts without separator. ["usr", "julian", "code"]
+
+There are methods to ask for a path to be returned with forwardslashes or
+backslashes, with or without the prefix if it exists.
+
+See test_gpath.py for full behavior.
+"""
+
 from future.utils import python_2_unicode_compatible
-
+ 
 import os
-
 import re
 
-RX_LETTER = re.compile(r"^([a-zA-Z]):[\\/]+")
+# https://regex101.com/r/EeOqb4/1/
+RX_PREFIXED_PATH= re.compile(r"^([a-zA-Z]:|\\|\/)[\\\/]+")
+RX_PREFIX = re.compile(r"^([a-zA-Z]:|\\|\/)")
 RX_DOLLAR_VAR = re.compile(r"\$([A-Za-z][A-Z,a-z0-9_]+)")
 
 
@@ -44,14 +62,19 @@ class Path(object):
         Also expand, env vars and user unless explicitly told not to with the
         no_expand option. 
         """
-        self._drive_letter = None
+
+        self._drive_prefix = None
 
         if not path:
             raise ValueError("Empty path")
 
         if isinstance(path, list):
             ipath = path[:]
-            self._drive_letter = ipath.pop(0)[0] if RX_LETTER.match(ipath[0]) else None
+            match = RX_PREFIX.match(ipath[0])
+            if match:
+                self._drive_prefix = ipath.pop(0).replace("\\", "/")
+ 
+
             self._components = _normalize_dots(ipath)
             self._absolute = True
         else:
@@ -62,12 +85,12 @@ class Path(object):
             if not kw.get("no_expand", False):
                 path = os.path.expanduser(os.path.expandvars(path))
 
-            match = RX_LETTER.match(path)
-            # print "match", match, match.group(1) if match else None
+            match = RX_PREFIXED_PATH.match(path)
+ 
             if match:
-                self._drive_letter = match.group(1)
-                path = path.split(":", 1)[1]
-    
+                self._drive_prefix = match.group(1).replace("\\", "/")
+                path = RX_PREFIX.sub("", path)
+ 
             self._absolute = path[0] in ["/", "\\"]
 
             self._components = _normalize_dots(
@@ -81,8 +104,13 @@ class Path(object):
         result = sep.join(self._components)
         if self._absolute:
             result = "{}{}".format(sep, result)
-            if with_drive_letter and self._drive_letter:
-                result = "{}:{}".format(self._drive_letter, result)
+            if with_drive_letter and self._drive_prefix:
+
+                prefix = self._drive_prefix
+                if prefix == "/":
+                    prefix = sep
+
+                result = "{}{}".format(prefix, result)
         return result
 
     def fslash(self, **kw):
@@ -129,7 +157,7 @@ class Path(object):
 
     @property
     def drive_letter(self):
-        return self._drive_letter or ""
+        return self._drive_prefix or ""
 
     @property
     def absolute(self):
@@ -145,8 +173,8 @@ class Path(object):
 
     @property
     def all_components(self):
-        if self.drive_letter:
-            return ["{}:".format(self.drive_letter)] + self.components
+        if self._drive_prefix:
+            return ["{}".format(self._drive_prefix)] + self.components
         else:
             return self.components
 
