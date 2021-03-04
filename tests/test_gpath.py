@@ -5,8 +5,13 @@
 
 import os
 import sys
-import mock
 import unittest
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
 
 SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
 if SRC not in sys.path:

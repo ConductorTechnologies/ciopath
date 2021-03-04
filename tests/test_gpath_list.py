@@ -6,8 +6,11 @@
 import sys
 import os
 import unittest
-import mock
-from mock import patch
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
 if SRC not in sys.path:
@@ -401,7 +404,7 @@ class MissingFilesTest(unittest.TestCase):
 
     def setUp(self):
 
-        patcher = patch('os.path.exists')
+        patcher = mock.patch('os.path.exists')
         self.mock_exists = patcher.start()
         self.mock_exists.side_effect = MissingFilesTest.side_effect
         self.addCleanup(patcher.stop)
