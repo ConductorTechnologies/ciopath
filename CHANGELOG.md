@@ -1,3 +1,7 @@
+### Version:0.1.1 -- 09 Mar 2021
+
+* Adds unc path initialization. [20eaeed]
+
 ### Version:0.1.0 -- 20 Sep 2020
 
 * Python 2 and 3 compatibility. [361ff3d]
