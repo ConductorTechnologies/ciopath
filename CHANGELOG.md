@@ -1,3 +1,7 @@
+### Version:0.1.2 -- 10 Mar 2021
+
+* Add .circleci/config.yml. [21ea865]
+
 ### Version:0.1.1 -- 09 Mar 2021
 
 * Adds unc path initialization. [20eaeed]
