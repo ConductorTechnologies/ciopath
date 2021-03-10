@@ -1,13 +1,78 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
-# Use a package of configuration called an orb.
+
 orbs:
-  # Declare a dependency on the welcome-orb
-  welcome: circleci/welcome-orb@0.4.1
-# Orchestrate or schedule a set of jobs
+  python: circleci/python@1.3.2
+
+jobs:
+  test-pypi:
+    executor: python/default
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+      - run:
+          command: tox
+          name: Tox tests
+      - run:
+          command: |
+            echo -e "[testpypi]" > ~/.pypirc
+            echo -e "username = conductor" >> ~/.pypirc
+            echo -e "password = $TEST_PYPI_PASSWORD" >> ~/.pypirc
+          name: Create pypi credentials
+      - run:
+          command: |
+            python3 setup.py sdist bdist_wheel
+          name: Create packages
+      - run:
+          command: |
+            twine upload  -r testpypi  dist/*
+          name: Upload to testpypi
+
+  release-pypi:
+    executor: python/default
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+      - run:
+          command: tox
+          name: Tox tests
+      - run:
+          command: |
+            echo -e "[pypi]" > ~/.pypirc
+            echo -e "username = conductor" >> ~/.pypirc
+            echo -e "password = $PROD_PYPI_PASSWORD" >> ~/.pypirc
+          name: Create pypi credentials
+      - run:
+          command: |
+            python3 setup.py sdist bdist_wheel
+          name: Create packages
+      - run:
+          command: |
+            twine upload dist/*
+          name: Upload to pypi
+      - add_ssh_keys:
+          fingerprints:
+            - "67:ac:0f:25:18:56:f1:37:a4:6d:9c:67:c0:83:81:9c"
+      - run:
+          command: |
+            version=$(cat VERSION)
+            git tag -a -m "Release tag:${version}" ${version}
+            git push origin ${version}
+          name: Push a release tag
+
 workflows:
-  # Name the workflow "welcome"
-  welcome:
-    # Run the welcome/run job in its own container
+  main:
     jobs:
-      - welcome/run
+      - test-pypi:
+          context:
+            - skulk-context
+          filters:
+            branches:
+              ignore: master
+      - release-pypi:
+          context:
+            - skulk-context
+          filters:
+            branches:
+              only: master
