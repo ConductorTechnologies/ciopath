@@ -219,6 +219,28 @@ class PathContextExpansionTest(unittest.TestCase):
             self.p.fslash(), "/some/root/bar_fly1_val/fooval/thefile.$F.jpg"
         )
 
+    def test_path_replaces_context_braces(self):
+        self.p = Path("${ROOT_DIR}/thefile.jpg", context=self.context)
+        self.assertEqual(self.p.fslash(), "/some/root/thefile.jpg")
+
+    def test_path_replaces_multiple_context_braces(self):
+        self.p = Path("${ROOT_DIR}/${BAR_FLY1_}/thefile.jpg", context=self.context)
+        self.assertEqual(self.p.fslash(),
+                         "/some/root/bar_fly1_val/thefile.jpg")
+
+    def test_path_context_overrides_env_braces(self):
+        self.p = Path("${HOME}/thefile.jpg", context=self.context)
+        self.assertEqual(self.p.fslash(), "/users/janedoe/thefile.jpg")
+
+    def test_path_leave_unknown_variable_in_tact_braces(self):
+        self.p = Path("${ROOT_DIR}/${BAR_FLY1_}/${FOO}/thefile.$F.jpg",
+                      context=self.context)
+        self.assertEqual(
+            self.p.fslash(), "/some/root/bar_fly1_val/fooval/thefile.$F.jpg"
+        )
+
+
+
 
 class PathLengthTest(unittest.TestCase):
     def test_len_with_drive_letter(self):

@@ -23,10 +23,19 @@ import re
 # https://regex101.com/r/EeOqb4/1/
 RX_PREFIXED_PATH= re.compile(r"^([a-zA-Z]:|\\|\/)[\\\/]+")
 RX_PREFIX = re.compile(r"^([a-zA-Z]:|\\|\/)")
-RX_DOLLAR_VAR = re.compile(r"\$([A-Za-z][A-Z,a-z0-9_]+)")
+
+# this matches env style variables: e.g. $FOO or ${FOO}
+RX_DOLLAR_VAR = re.compile(r"\$\{?([A-Za-z][A-Z,a-z0-9_]+)\}?")
 
 
 def _expand_context(path, context):
+    """
+    Replace $ variables in strings.
+
+    Variable names can either be $NAME or ${NAME}
+
+    Return the string
+    """
     result = path
     if context:
         for match in RX_DOLLAR_VAR.finditer(path):
@@ -34,6 +43,7 @@ def _expand_context(path, context):
             replacement = context.get(key)
             if replacement is not None:
                 result = result.replace("${}".format(key), replacement)
+                result = result.replace("${{{}}}".format(key), replacement)
     return result
 
 
