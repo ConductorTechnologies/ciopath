@@ -387,13 +387,38 @@ class UNCTests(unittest.TestCase):
         p = Path("\\\\a\\b\\c")
         self.assertEqual(p.fslash(with_drive=True), "//a/b/c")
 
-    def test_unc_root_with_drive(self):
+    def test_unc_is_absolute(self):
+        p = Path("\\\\a\\b\\c")
+        self.assertTrue(p.absolute)
+
+
+    def test_unc_root_without_drive(self):
         p = Path("\\\\a\\b\\c")
         self.assertEqual(p.fslash(with_drive=False), "/a/b/c")
 
     def test_unc_root_with_forward(self):
         p = Path("//a/b/c")
         self.assertEqual(p.fslash(with_drive=True), "//a/b/c")
+
+    def test_is_unc(self):
+        p = Path("\\\\a\\b\\c")
+        self.assertTrue(p.is_unc)
+        p = Path("//a/b/c")
+        self.assertTrue(p.is_unc)
+
+    def test_posix_abs_is_not_unc(self):
+        p = Path(["/a/b/c"])
+        self.assertFalse(p.is_unc)
+
+    def test_relative_is_not_unc(self):
+        p = Path(["a/b/c"])
+        self.assertFalse(p.is_unc)
+
+    def test_drive_letter_is_not_unc(self):
+        p = Path("C:\\aaa\\bbb\\c")
+        self.assertFalse(p.is_unc)
+
+
 
 if __name__ == "__main__":
     unittest.main()

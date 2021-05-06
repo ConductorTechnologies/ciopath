@@ -174,6 +174,10 @@ class Path(object):
         return self._absolute
 
     @property
+    def is_unc(self):
+        return self._drive_prefix in ["/", "\\"]
+
+    @property
     def relative(self):
         return not self._absolute
 
