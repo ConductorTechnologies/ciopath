@@ -1,3 +1,7 @@
+### Version:0.1.5 -- 06 May 2021
+
+* Adds property and tests to detect unc. [366140d]
+
 ### Version:0.1.4 -- 25 Mar 2021
 
 * Adds dollar braces to context expansion. This helps for xgen scraping. [a217565]
