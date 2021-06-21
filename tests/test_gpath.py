@@ -264,7 +264,8 @@ class PathLengthTest(unittest.TestCase):
         self.assertEqual(self.p.depth, 3)
 
 
-class PathCollapseDotsTest(unittest.TestCase):
+class AbsolutePathCollapseDotsTest(unittest.TestCase):
+
     def test_path_collapses_single_dot(self):
         p = Path("/a/b/./c")
         self.assertEqual(p.fslash(), "/a/b/c")
@@ -299,6 +300,34 @@ class PathCollapseDotsTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             Path("/a/b/../../../")
 
+class RelativePathCollapseDotsTest(unittest.TestCase):
+    
+    def test_resolve_relative_several_dots(self):
+        p = Path("./a/b/../../../c/d")
+        self.assertEqual(p.fslash(), "../c/d")
+        self.assertEqual(p.all_components, ["..", "c", "d"])
+        self.assertEqual(p.depth, 3)
+
+    def test_resolve_leading_relative_dots(self):
+        p = Path("../c/d")
+        self.assertEqual(p.fslash(), "../c/d")
+
+    def test_resolve_leading_relative_dots(self):
+        p = Path("../../../c/d")
+        self.assertEqual(p.fslash(), "../../../c/d")
+
+    def test_resolve_only_relative_dots(self):
+        p = Path("../../../")
+        self.assertEqual(p.fslash(), "../../../")
+
+    def test_collapse_contained_components(self):
+        p = Path("../../../a/b/../../../")
+        self.assertEqual(p.fslash(), "../../../../")
+  
+    def test_remove_trailing_dot(self):
+        p = Path("../../.././")
+        self.assertEqual(p.fslash(), "../../../")
+  
 
 class PathComponentsTest(unittest.TestCase):
     def test_path_gets_tail(self):
@@ -362,6 +391,16 @@ class InitializeWithComponentsTests(unittest.TestCase):
     def test_initialize_with_unc_components(self):
         p = Path(["/","a", "b", "c"])
         self.assertEqual(p.bslash(with_drive=True), "\\\\a\\b\\c")
+
+    def test_initialize_with_relative_components(self):
+        p = Path(["a", "b", "c"])
+        self.assertEqual(p.bslash(with_drive=True), "a\\b\\c")
+
+    def test_initialize_with_relative_components_is_relative(self):
+        p = Path(["a", "b", "c"])
+        self.assertTrue(p.relative)
+        self.assertFalse(p.absolute)
+
 
 class GetComponentsTests(unittest.TestCase):
 
