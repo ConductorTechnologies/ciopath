@@ -1,3 +1,8 @@
+### Version:0.1.6 -- 20 Jun 2021
+
+* Fixed bug where relative paths that contained ".." would fail if the dots took them higher than
+  the initial path component. [e2fca91]
+
 ### Version:0.1.5 -- 06 May 2021
 
 * Adds property and tests to detect unc. [366140d]

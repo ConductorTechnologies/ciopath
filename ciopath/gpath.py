@@ -47,25 +47,39 @@ def _expand_context(path, context):
     return result
 
 
-def _normalize_dots(components):
+def _normalize_dots(components, absolute=True):
     currentdir = "."
     parentdir = ".."
     result = []
+    if absolute:
+        for c in components:
+            if c == currentdir:
+                pass
+            elif c == parentdir:
+                if not len(result):
+                    raise ValueError("Can't resolve components of absolute path due to '..' overflow.")
+                del result[-1]
+            else:
+                result.append(c)
+        return result
+
     for c in components:
         if c == currentdir:
             pass
         elif c == parentdir:
-            if not len(result):
-                raise ValueError("Can't resolve components due to '..' overflow.")
-            del result[-1]
+            if not len(result) or result[-1] == parentdir:
+                result.append(parentdir)
+            else:    
+                del result[-1]
         else:
             result.append(c)
     return result
 
 
+
 class Path(object):
     def __init__(self, path, **kw):
-        """Initialize a generic absolute path.
+        """Initialize a generic path.
 
         If path is a list, then each element will be a component of the path. 
         If it's a string then expand context variables.
@@ -81,12 +95,12 @@ class Path(object):
         if isinstance(path, list):
             ipath = path[:]
             match = RX_PREFIX.match(ipath[0])
+            self._absolute = False
             if match:
                 self._drive_prefix = ipath.pop(0).replace("\\", "/")
- 
+                self._absolute = True
 
             self._components = _normalize_dots(ipath)
-            self._absolute = True
         else:
             context = kw.get("context")
             if context:
@@ -104,7 +118,8 @@ class Path(object):
             self._absolute = path[0] in ["/", "\\"]
 
             self._components = _normalize_dots(
-                [s for s in re.split("/|\\\\", path) if s]
+                [s for s in re.split("/|\\\\", path) if s],
+                self._absolute
             )
 
         self._depth = len(self._components)
@@ -112,6 +127,8 @@ class Path(object):
     def _construct_path(self, sep, with_drive_letter=True):
         """Reconstruct path for given path sep."""
         result = sep.join(self._components)
+        if len(self._components) and self._components[-1] in [".", ".."]:
+            result = "{}{}".format(result, sep)
         if self._absolute:
             result = "{}{}".format(sep, result)
             if with_drive_letter and self._drive_prefix:
