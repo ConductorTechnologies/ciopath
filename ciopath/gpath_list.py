@@ -4,7 +4,6 @@ from itertools import takewhile
 import glob
 
 from ciopath.gpath import Path
-from builtins import object
 
 GLOBBABLE_REGEX = re.compile(r"\*|\?|\[")
 
@@ -168,7 +167,7 @@ class PathList(object):
         return iter(self._entries)
 
     def __next__(self):
-    # def next(self):
+
         """Get the next element.
 
         Deduplicate just in time.
@@ -180,6 +179,8 @@ class PathList(object):
             prev = self._current
             self._current += 1
             return self._entries[prev]
+
+    next = __next__ # Python 2
 
     def __len__(self):
         """Get the size of the entry list.
