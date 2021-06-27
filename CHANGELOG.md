@@ -1,3 +1,8 @@
+### Version:0.1.7 -- 27 Jun 2021
+
+* Now supports a single dot (cwd) and handles relative normalization. [5e015ff]
+* Repair py2+3 next() and removes the need to import builtins. [f3ad5fd]
+
 ### Version:0.1.6 -- 20 Jun 2021
 
 * Fixed bug where relative paths that contained ".." would fail if the dots took them higher than
