@@ -1,3 +1,8 @@
+### Version:0.1.8 -- 07 Aug 2021
+
+* Adds cwd normalization. [672da6c]
+* Repair next() function for python 2+3 compatibility. [59681cc]
+
 ### Version:0.1.7 -- 27 Jun 2021
 
 * Now supports a single dot (cwd) and handles relative normalization. [5e015ff]
