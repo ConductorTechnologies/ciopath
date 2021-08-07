@@ -23,11 +23,11 @@ sys.modules["glob"] = __import__("mocks.glob", fromlist=["dummy"])
 
 
 class BadInputTest(unittest.TestCase):
-
     def test_empty_input(self):
         with self.assertRaises(ValueError):
             self.p = Path("")
-            
+
+
 class RootPath(unittest.TestCase):
     def test_root_path(self):
         self.p = Path("/")
@@ -50,8 +50,6 @@ class SpecifyDriveLetterUse(unittest.TestCase):
         self.p = Path("C:\\")
         self.assertEqual(self.p.fslash(with_drive=False), "/")
         self.assertEqual(self.p.bslash(with_drive=False), "\\")
-
-
 
 
 class AbsPosixPathTest(unittest.TestCase):
@@ -82,25 +80,22 @@ class AbsWindowsPathTest(unittest.TestCase):
         with mock.patch("os.name", "nt"):
             self.assertEqual(self.p.os_path(), "C:\\a\\b\\c")
 
-class PathStringTest(unittest.TestCase):
 
+class PathStringTest(unittest.TestCase):
     def test_path_emits_string_posix(self):
         input_file = "/path/to/thefile.jpg"
         p = Path(input_file)
-        self.assertEqual(str(p) , input_file)
+        self.assertEqual(str(p), input_file)
 
     def test_path_emits_string_with_drive(self):
         input_file = "C:/path/to/thefile.jpg"
         p = Path(input_file)
-        self.assertEqual(str(p) , input_file)
+        self.assertEqual(str(p), input_file)
 
     def test_path_emits_string_relative(self):
         input_file = "path/to/thefile.jpg"
         p = Path(input_file)
-        self.assertEqual(str(p) , input_file)
-
-
-
+        self.assertEqual(str(p), input_file)
 
 
 class WindowsMixedPathTest(unittest.TestCase):
@@ -148,14 +143,12 @@ class PathExpansionTest(unittest.TestCase):
     def test_posix_two_var_input(self):
         with mock.patch.dict("os.environ", self.env):
             self.p = Path("$SHOT/a/b/$DEPT/c")
-            self.assertEqual(self.p.fslash(),
-                             "/metropolis/shot01/a/b/texturing/c")
+            self.assertEqual(self.p.fslash(), "/metropolis/shot01/a/b/texturing/c")
 
     def test_windows_var_input(self):
         with mock.patch.dict("os.environ", self.env):
             self.p = Path("$HOME\\a\\b\\c")
-            self.assertEqual(self.p.bslash(),
-                             "\\users\\joebloggs\\a\\b\\c")
+            self.assertEqual(self.p.bslash(), "\\users\\joebloggs\\a\\b\\c")
             self.assertEqual(self.p.fslash(), "/users/joebloggs/a/b/c")
 
     def test_tilde_no_expand(self):
@@ -181,8 +174,6 @@ class PathExpansionTest(unittest.TestCase):
             self.assertTrue(self.p.absolute)
 
 
-
-
 class PathContextExpansionTest(unittest.TestCase):
     def setUp(self):
 
@@ -205,19 +196,15 @@ class PathContextExpansionTest(unittest.TestCase):
 
     def test_path_replaces_multiple_context(self):
         self.p = Path("$ROOT_DIR/$BAR_FLY1_/thefile.jpg", context=self.context)
-        self.assertEqual(self.p.fslash(),
-                         "/some/root/bar_fly1_val/thefile.jpg")
+        self.assertEqual(self.p.fslash(), "/some/root/bar_fly1_val/thefile.jpg")
 
     def test_path_context_overrides_env(self):
         self.p = Path("$HOME/thefile.jpg", context=self.context)
         self.assertEqual(self.p.fslash(), "/users/janedoe/thefile.jpg")
 
     def test_path_leave_unknown_variable_in_tact(self):
-        self.p = Path("$ROOT_DIR/$BAR_FLY1_/$FOO/thefile.$F.jpg",
-                      context=self.context)
-        self.assertEqual(
-            self.p.fslash(), "/some/root/bar_fly1_val/fooval/thefile.$F.jpg"
-        )
+        self.p = Path("$ROOT_DIR/$BAR_FLY1_/$FOO/thefile.$F.jpg", context=self.context)
+        self.assertEqual(self.p.fslash(), "/some/root/bar_fly1_val/fooval/thefile.$F.jpg")
 
     def test_path_replaces_context_braces(self):
         self.p = Path("${ROOT_DIR}/thefile.jpg", context=self.context)
@@ -225,21 +212,15 @@ class PathContextExpansionTest(unittest.TestCase):
 
     def test_path_replaces_multiple_context_braces(self):
         self.p = Path("${ROOT_DIR}/${BAR_FLY1_}/thefile.jpg", context=self.context)
-        self.assertEqual(self.p.fslash(),
-                         "/some/root/bar_fly1_val/thefile.jpg")
+        self.assertEqual(self.p.fslash(), "/some/root/bar_fly1_val/thefile.jpg")
 
     def test_path_context_overrides_env_braces(self):
         self.p = Path("${HOME}/thefile.jpg", context=self.context)
         self.assertEqual(self.p.fslash(), "/users/janedoe/thefile.jpg")
 
     def test_path_leave_unknown_variable_in_tact_braces(self):
-        self.p = Path("${ROOT_DIR}/${BAR_FLY1_}/${FOO}/thefile.$F.jpg",
-                      context=self.context)
-        self.assertEqual(
-            self.p.fslash(), "/some/root/bar_fly1_val/fooval/thefile.$F.jpg"
-        )
-
-
+        self.p = Path("${ROOT_DIR}/${BAR_FLY1_}/${FOO}/thefile.$F.jpg", context=self.context)
+        self.assertEqual(self.p.fslash(), "/some/root/bar_fly1_val/fooval/thefile.$F.jpg")
 
 
 class PathLengthTest(unittest.TestCase):
@@ -265,7 +246,6 @@ class PathLengthTest(unittest.TestCase):
 
 
 class AbsolutePathCollapseDotsTest(unittest.TestCase):
-
     def test_path_collapses_single_dot(self):
         p = Path("/a/b/./c")
         self.assertEqual(p.fslash(), "/a/b/c")
@@ -300,8 +280,8 @@ class AbsolutePathCollapseDotsTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             Path("/a/b/../../../")
 
+
 class RelativePathCollapseDotsTest(unittest.TestCase):
-    
     def test_resolve_relative_several_dots(self):
         p = Path("./a/b/../../../c/d")
         self.assertEqual(p.fslash(), "../c/d")
@@ -323,11 +303,27 @@ class RelativePathCollapseDotsTest(unittest.TestCase):
     def test_collapse_contained_components(self):
         p = Path("../../../a/b/../../../")
         self.assertEqual(p.fslash(), "../../../../")
-  
+
     def test_remove_trailing_dot(self):
         p = Path("../../.././")
         self.assertEqual(p.fslash(), "../../../")
-  
+
+    def test_cwd(self):
+        p = Path(".")
+        self.assertEqual(p.fslash(), "./")
+
+    def test_down_up_cwd(self):
+        p = Path("a/..")
+        self.assertEqual(p.fslash(), "./")
+
+    def test_up_down_sibling(self):
+        p = Path("../a")
+        self.assertEqual(p.fslash(), "../a")
+
+    def test_up_down_sibling_bslash(self):
+        p = Path("../a")
+        self.assertEqual(p.bslash(), "..\\a")
+
 
 class PathComponentsTest(unittest.TestCase):
     def test_path_gets_tail(self):
@@ -352,7 +348,7 @@ class RelativePathTest(unittest.TestCase):
         p = Path("a/b/c")
         self.assertEqual(p.fslash(), "a/b/c")
 
- 
+
 class EqualityTests(unittest.TestCase):
     def test_paths_equal(self):
         p1 = Path("a/b/c")
@@ -375,21 +371,20 @@ class EqualityTests(unittest.TestCase):
 
 
 class InitializeWithComponentsTests(unittest.TestCase):
-
     def test_initialize_with_lettered_components(self):
-        p = Path(["C:","a", "b", "c"])
+        p = Path(["C:", "a", "b", "c"])
         self.assertEqual(p.fslash(with_drive=True), "C:/a/b/c")
 
     def test_initialize_with_backslash_unc_components(self):
-        p = Path(["\\","a", "b", "c"])
+        p = Path(["\\", "a", "b", "c"])
         self.assertEqual(p.fslash(with_drive=True), "//a/b/c")
 
     def test_initialize_with_fwslash_unc_components(self):
-        p = Path(["/","a", "b", "c"])
+        p = Path(["/", "a", "b", "c"])
         self.assertEqual(p.fslash(with_drive=True), "//a/b/c")
 
     def test_initialize_with_unc_components(self):
-        p = Path(["/","a", "b", "c"])
+        p = Path(["/", "a", "b", "c"])
         self.assertEqual(p.bslash(with_drive=True), "\\\\a\\b\\c")
 
     def test_initialize_with_relative_components(self):
@@ -403,25 +398,24 @@ class InitializeWithComponentsTests(unittest.TestCase):
 
 
 class GetComponentsTests(unittest.TestCase):
-
     def test_get_all_components(self):
         p = Path("/a/b/c")
-        self.assertEqual(p.all_components, ["a","b","c"])
+        self.assertEqual(p.all_components, ["a", "b", "c"])
 
     def test_get_all_components_with_drive(self):
         p = Path("C:/a/b/c")
-        self.assertEqual(p.all_components, ["C:","a","b","c"])
+        self.assertEqual(p.all_components, ["C:", "a", "b", "c"])
 
     def test_get_all_components_with_unc_fwslash(self):
         p = Path("//a/b/c")
-        self.assertEqual(p.all_components, ["/","a","b","c"])
+        self.assertEqual(p.all_components, ["/", "a", "b", "c"])
 
     def test_get_all_components_with_unc_backslash(self):
         p = Path("\\\\a\\b\\c")
-        self.assertEqual(p.all_components, ["/","a","b","c"])
+        self.assertEqual(p.all_components, ["/", "a", "b", "c"])
+
 
 class UNCTests(unittest.TestCase):
-
     def test_unc_root_with_drive(self):
         p = Path("\\\\a\\b\\c")
         self.assertEqual(p.fslash(with_drive=True), "//a/b/c")
@@ -429,7 +423,6 @@ class UNCTests(unittest.TestCase):
     def test_unc_is_absolute(self):
         p = Path("\\\\a\\b\\c")
         self.assertTrue(p.absolute)
-
 
     def test_unc_root_without_drive(self):
         p = Path("\\\\a\\b\\c")
@@ -456,7 +449,6 @@ class UNCTests(unittest.TestCase):
     def test_drive_letter_is_not_unc(self):
         p = Path("C:\\aaa\\bbb\\c")
         self.assertFalse(p.is_unc)
-
 
 
 if __name__ == "__main__":

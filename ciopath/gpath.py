@@ -73,6 +73,9 @@ def _normalize_dots(components, absolute=True):
                 del result[-1]
         else:
             result.append(c)
+    
+    if not result: 
+        result="."
     return result
 
 
