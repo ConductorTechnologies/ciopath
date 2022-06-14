@@ -1,4 +1,4 @@
-tox==3.14.4
+tox
 setuptools 
 wheel 
-twine
+twine1
