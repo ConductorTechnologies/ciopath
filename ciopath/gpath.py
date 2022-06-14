@@ -153,6 +153,50 @@ class Path(object):
         with_drive_letter = kw.get("with_drive", True)
         return self._construct_path("\\", with_drive_letter)
 
+    def make_relative_to(self, start):
+        """Make this absolute Path relative with respect to the given start folder.
+
+        We don't check that the start folder is in fact a folder. If you give a file instead you may
+        get a result with too many '..' components.
+        
+        We ignore any drive prefixes. This means paths on 2 different Windows drives are considered
+        to be on the same drive. This is not a problem for the purpose of this function.
+
+        We don't change the path if it's already relative.
+        """
+        if not isinstance(start, Path):
+            raise TypeError("Start path must be a gpath Path")
+
+        if not (self.absolute and start.absolute):
+            """If either are relative, then we don't change the path.
+            
+            It's impossible to know their relationship.
+            """
+            return
+
+        components = self._components
+        other_components = start._components
+
+        if components == other_components:
+             raise ValueError("Paths (without drive prefixes) must be different.")
+
+        # remove the common parts
+        while len(components) and len(other_components) and components[0] == other_components[0]:
+            components = components[1:]
+            other_components = other_components[1:]
+
+        # both or one or none could be empty
+        components = [".."] * len(other_components) + components
+
+        if not components:
+            components = "."
+
+        self._components = components
+        self._drive_prefix = None
+        self._absolute = False
+        self._depth = len(self._components) # depth is kind of pointless for relative paths. 
+        # TODO: Remove depth altogether
+
     def os_path(self, **kw):
         """Path with slashes for current os. Can include drive letter."""
         with_drive = kw.get("with_drive", True)
