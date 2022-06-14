@@ -1,3 +1,7 @@
+### Version:0.2.0 -- 14 Jun 2022
+
+* Adds a function to make a path relative to a start path. [bcd624c]
+
 ### Version:0.1.8 -- 07 Aug 2021
 
 * Adds cwd normalization. [672da6c]
