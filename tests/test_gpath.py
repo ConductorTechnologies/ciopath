@@ -222,6 +222,16 @@ class PathContextExpansionTest(unittest.TestCase):
         self.p = Path("${ROOT_DIR}/${BAR_FLY1_}/${FOO}/thefile.$F.jpg", context=self.context)
         self.assertEqual(self.p.fslash(), "/some/root/bar_fly1_val/fooval/thefile.$F.jpg")
 
+    def test_path_expand_braced_vars_first(self):
+        context = {"FOO": "foo", "FOOBAR": "foobar"}
+        self.p = Path("${FOO}/${FOOBAR}/thefile.$F.jpg", context=context)
+        self.assertEqual(self.p.fslash(), "foo/foobar/thefile.$F.jpg")
+
+    def test_not_greedy(self):
+        context = {"FOO": "foo", "FOOBAR": "foobar"}
+        self.p = Path("$FOO/$FOOBAR/thefile.$F.jpg", context=context)
+        self.assertEqual(self.p.fslash(), "foo/fooBAR/thefile.$F.jpg")
+
 
 class PathLengthTest(unittest.TestCase):
     def test_len_with_drive_letter(self):
@@ -450,6 +460,71 @@ class UNCTests(unittest.TestCase):
         p = Path("C:\\aaa\\bbb\\c")
         self.assertFalse(p.is_unc)
 
+
+class MakeRelativeTest(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_make_posix_absolute_relative(self):
+        p = Path("/a/b/c/d")
+        base = Path("/a/b/f/g")
+        p.make_relative_to(base)
+        self.assertEqual(p.fslash(), "../../c/d")
+        self.assertTrue(p.relative)
+
+    def test_ignore_different_windows_drives(self):
+        p = Path("C:/a/b/c/d")
+        base = Path("D:/a/b/f/g")
+        p.make_relative_to(base)
+        self.assertEqual(p.fslash(), "../../c/d")
+        self.assertTrue(p.relative)
+
+    def test_leave_relative_unchanged(self):
+        p = Path("a/b/c/d")
+        base = Path("/a/b/f/g")
+        p.make_relative_to(base)
+        self.assertEqual(p.fslash(), "a/b/c/d")
+        self.assertTrue(p.relative)
+
+    def test_file_at_root(self):
+        p = Path("/d")
+        base = Path("/a/b/f/g")
+        p.make_relative_to(base)
+        self.assertEqual(p.fslash(), "../../../../d")
+        self.assertTrue(p.relative)
+
+    def test_base_at_root(self):
+        p = Path("/d/e")
+        base = Path("/")
+        p.make_relative_to(base)
+        self.assertEqual(p.fslash(), "d/e")
+        self.assertTrue(p.relative)
+
+    def test_file_is_root_folder(self):
+        p = Path("/")
+        base = Path("/a/b/c/d")
+        p.make_relative_to(base)
+        self.assertEqual(p.fslash(), "../../../../")
+        self.assertTrue(p.relative)
+
+    def test_file_at_same_folder(self):
+        p = Path("/a/b/c/d")
+        base = Path("/a/b/c/z")
+        p.make_relative_to(base)
+        self.assertEqual(p.fslash(), "../d")
+
+    def test_same_path_is_error(self):
+        p = Path("/a/b/c/d")
+        base = Path("/a/b/c/d")
+        with self.assertRaises(ValueError):
+            p.make_relative_to(base)
+        
+    def test_not_path_is_error(self):
+        p = Path("/a/b")
+        base = "/a"
+        with self.assertRaises(TypeError):
+            p.make_relative_to(base)
+        
 
 if __name__ == "__main__":
     unittest.main()
