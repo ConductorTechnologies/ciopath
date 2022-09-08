@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 """
 A platform independent representation of a path.
