@@ -51,6 +51,11 @@ class SpecifyDriveLetterUse(unittest.TestCase):
         self.assertEqual(self.p.fslash(with_drive=False), "/")
         self.assertEqual(self.p.bslash(with_drive=False), "\\")
 
+class UnicodeCharacters(unittest.TestCase):
+    def test_unicode_character(self):
+        self.p = Path(u'/a/b/\xc3/c')
+        self.assertEqual(self.p.fslash(), u'/a/b/\xc3/c')
+
 
 class AbsPosixPathTest(unittest.TestCase):
     def setUp(self):
