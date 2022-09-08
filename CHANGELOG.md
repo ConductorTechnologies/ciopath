@@ -1,3 +1,8 @@
+### Version:1.0.0 -- 08 Sep 2022
+
+* Use unicode literals. [53faa83]
+* Ignore venvs. [78d6b64]
+
 ### Version:0.1.8 -- 07 Aug 2021
 
 * Adds cwd normalization. [672da6c]
