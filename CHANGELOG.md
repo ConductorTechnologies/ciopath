@@ -1,3 +1,8 @@
+### Version:1.0.0 -- 08 Sep 2022
+
+* Use unicode literals. [53faa83]
+* Ignore venvs. [78d6b64]
+
 ### Version:0.2.0 -- 14 Jun 2022
 
 * Adds a function to make a path relative to a start path. [bcd624c]
