@@ -131,4 +131,6 @@ dmypy.json
 
 # vscode
 .vscode
-sequence.code-workspace
+sequence.code-workspace\
+
+*.venv
