@@ -67,21 +67,15 @@ class PathList(object):
     def _deduplicate(self):
         """Deduplicate if it has become dirty.
 
-        Algorithm explained at:
-        https://stackoverflow.com/questions/49478361 .
+        Old algorithm used to remove contained files, i.e. it would remove /a/b/c if /a/b was in the
+        list. It was removed as it was too slow for very large file counts.
+        I believe it's possible to further optimize at some later date, which is why I'll leave the
+        link to the explanation.
+        https://stackoverflow.com/questions/49478361
         """
         if self._clean:
             return
-
-        sorted_entries = sorted(
-            self._entries, key=lambda entry: (entry.depth, -len(entry.tail))
-        )
-
-        self._entries = []
-        for entry in sorted_entries:
-            if any(entry.startswith(p) for p in self._entries):
-                continue
-            self._entries.append(entry)
+        self._entries = sorted(set(self._entries))
         self._clean = True
 
     def __contains__(self, key):
