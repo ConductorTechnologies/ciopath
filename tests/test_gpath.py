@@ -384,6 +384,10 @@ class EqualityTests(unittest.TestCase):
         p2 = Path("a/b/d")
         self.assertTrue(p1 != p2)
 
+    def test_hash_works__same_object_not_in_set(self):
+        s = {Path("a/b/c"), Path("a/b/c/d"), Path("a/b/c/d/e"), Path("a/b/c/")}
+        self.assertEqual(len(s), 3)
+
 
 class InitializeWithComponentsTests(unittest.TestCase):
     def test_initialize_with_lettered_components(self):
