@@ -1,4 +1,4 @@
-### Version:1.0.1 -- 10 Sep 2022
+### Version:1.0.1 -- 11 Sep 2022
 
 * Faster deduplication. However it no longer removes files if a containing folder is present. [1696b8c]
 
