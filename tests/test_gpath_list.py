@@ -177,6 +177,7 @@ class PathListTest(unittest.TestCase):
         self.assertIn("/file1", d)
         self.assertIn("/file2", d)
 
+    # Keep this test in case one day we can reinstate the deep deduplication.
     # def test_dedup_contained_file(self):
     #     d = PathList()
     #     d.add("/dir1/", "/dir1/file1", "/dir2/file1", "/dir3/file2")
