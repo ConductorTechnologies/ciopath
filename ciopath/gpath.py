@@ -223,6 +223,12 @@ class Path(object):
             raise NotImplementedError
         return self.fslash() == rhs.fslash()
 
+    def __lt__(self, other):
+        return (self.fslash() < other.fslash())
+
+    def __hash__(self):
+        return hash(self.fslash())
+
     def __ne__(self, rhs):
         return not (self == rhs)
 
