@@ -3,6 +3,7 @@ import os
 import re
 from itertools import takewhile
 import glob
+import fnmatch
 
 from ciopath.gpath import Path
 
@@ -195,3 +196,28 @@ class PathList(object):
                 missing.add(path)
         if  missing:
             self.remove(*missing)
+
+    def remove_pattern(self, *patterns, **kwargs):
+        """Remove entries that match the given pattern(s).
+        
+        A pattern is a unix style wildcard pattern as defined by the fnmatch module.
+        *, ?, [seq], [!seq]
+
+        Patterns can be a several comma separated patterns. Examples:
+        "*.bak"
+        "*.bak", "*.tmp"
+        "*.bak, *.tmp"
+        "*.ext", "*.bak, *.tmp"
+        
+        """
+        flat_patterns = [item for pattern_str in patterns for item in re.split(', ', pattern_str)]
+
+        matches = PathList()
+        for path in self._entries:
+            for pattern in flat_patterns:
+                if fnmatch.fnmatch(path.fslash(), pattern) or fnmatch.fnmatch(path.bslash(), pattern):
+                    matches.add(path)
+                    break
+        
+        if matches:
+            self.remove(*matches)
