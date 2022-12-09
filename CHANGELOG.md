@@ -1,3 +1,7 @@
+### Version:1.0.3 -- 09 Dec 2022
+
+* Adds the ability to remove entries from a PathList based on unix-style wildcard patterns. [c7db4ae]
+
 ### Version:1.0.2 -- 27 Sep 2022
 
 * Faster deduplication. However it no longer removes files if a containing folder is present.
