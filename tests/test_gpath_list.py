@@ -460,5 +460,65 @@ class MissingFilesTest(unittest.TestCase):
         d.remove_missing()
         self.assertEqual(len(d), 4)
 
+
+
+class RemovePatternTest(unittest.TestCase):
+
+    def test_remove_an_extension(self):
+        d = PathList()
+        files = ["/tmp/foo.txt", "/tmp/bar.txt", "/tmp/bar.bak"]
+        d.add(*files)
+        self.assertEqual(len(d), 3)
+        d.remove_pattern("*.bak")
+        self.assertEqual(len(d), 2)
+
+    def test_remove_a_comma_separated_list_of_patterns(self):
+        d = PathList()
+        files = ["/tmp/foo.txt", "/tmp/bar.txt", "/tmp/bar.bak", "/tmp/bar.yum"]
+        d.add(*files)
+        self.assertEqual(len(d), 4)
+        d.remove_pattern("*.bak, *.txt")
+        self.assertEqual(len(d), 1)
+
+    def test_remove_several_patterns(self):
+        d = PathList()
+        files = ["/tmp/foo.txt", "/tmp/bar.txt", "/tmp/bar.bak", "/tmp/bar.yum"]
+        d.add(*files)
+        self.assertEqual(len(d), 4)
+        d.remove_pattern("*.bak", "*.txt")
+        self.assertEqual(len(d), 1)
+
+    def test_remove_without_error_when_several_patterns_match(self):
+        d = PathList()
+        files = ["/tmp/foo.txt", "/tmp/bar.txt", "/tmp/bar.bak", "/tmp/yum.dum"]
+        d.add(*files)
+        self.assertEqual(len(d), 4)
+        d.remove_pattern("*.bak", "/tmp/bar.*")
+        self.assertEqual(len(d), 2)
+
+    def test_remove_root_pattern(self):
+        d = PathList()
+        files = ["/tmp/foo.txt", "/tmp2/bar.txt", "/tmp2/bar.bak", "/tmp/yum.dum"]
+        d.add(*files)
+        self.assertEqual(len(d), 4)
+        d.remove_pattern("/tmp/*")
+        self.assertEqual(len(d), 2)
+ 
+    def test_remove_when_pattern_defined_with_backslashes(self):
+        d = PathList()
+        files = ["/tmp/foo.txt", "/tmp2/bar.txt", "/tmp2/bar.bak", "/tmp/yum.dum"]
+        d.add(*files)
+        self.assertEqual(len(d), 4)
+        d.remove_pattern("*tmp\\*")
+        self.assertEqual(len(d), 2)
+ 
+    def test_empty_the_list(self):
+        d = PathList()
+        files = ["/tmp2/bar.txt", "/tmp2/bar.bak", "/tmp/yum.dum"]
+        d.add(*files)
+        self.assertEqual(len(d), 3)
+        d.remove_pattern("*")
+        self.assertEqual(len(d), 0)
+ 
 if __name__ == "__main__":
     unittest.main()
