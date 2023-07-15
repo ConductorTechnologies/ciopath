@@ -7,11 +7,8 @@ import os
 import sys
 import unittest
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-
+from unittest import mock
+from unittest.mock import patch
 
 SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
 if SRC not in sys.path:
@@ -19,7 +16,7 @@ if SRC not in sys.path:
 
 from ciopath.gpath import Path
 
-sys.modules["glob"] = __import__("mocks.glob", fromlist=["dummy"])
+# sys.modules["glob"] = __import__("mocks.glob", fromlist=["dummy"])
 
 
 class BadInputTest(unittest.TestCase):
@@ -51,10 +48,11 @@ class SpecifyDriveLetterUse(unittest.TestCase):
         self.assertEqual(self.p.fslash(with_drive=False), "/")
         self.assertEqual(self.p.bslash(with_drive=False), "\\")
 
+
 class UnicodeCharacters(unittest.TestCase):
     def test_unicode_character(self):
-        self.p = Path(u'/a/b/\xc3/c')
-        self.assertEqual(self.p.fslash(), u'/a/b/\xc3/c')
+        self.p = Path("/a/b/\xc3/c")
+        self.assertEqual(self.p.fslash(), "/a/b/\xc3/c")
 
 
 class AbsPosixPathTest(unittest.TestCase):
@@ -181,7 +179,6 @@ class PathExpansionTest(unittest.TestCase):
 
 class PathContextExpansionTest(unittest.TestCase):
     def setUp(self):
-
         self.env = {
             "HOME": "/users/joebloggs",
             "SHOT": "/metropolis/shot01",
@@ -209,7 +206,9 @@ class PathContextExpansionTest(unittest.TestCase):
 
     def test_path_leave_unknown_variable_in_tact(self):
         self.p = Path("$ROOT_DIR/$BAR_FLY1_/$FOO/thefile.$F.jpg", context=self.context)
-        self.assertEqual(self.p.fslash(), "/some/root/bar_fly1_val/fooval/thefile.$F.jpg")
+        self.assertEqual(
+            self.p.fslash(), "/some/root/bar_fly1_val/fooval/thefile.$F.jpg"
+        )
 
     def test_path_replaces_context_braces(self):
         self.p = Path("${ROOT_DIR}/thefile.jpg", context=self.context)
@@ -224,8 +223,12 @@ class PathContextExpansionTest(unittest.TestCase):
         self.assertEqual(self.p.fslash(), "/users/janedoe/thefile.jpg")
 
     def test_path_leave_unknown_variable_in_tact_braces(self):
-        self.p = Path("${ROOT_DIR}/${BAR_FLY1_}/${FOO}/thefile.$F.jpg", context=self.context)
-        self.assertEqual(self.p.fslash(), "/some/root/bar_fly1_val/fooval/thefile.$F.jpg")
+        self.p = Path(
+            "${ROOT_DIR}/${BAR_FLY1_}/${FOO}/thefile.$F.jpg", context=self.context
+        )
+        self.assertEqual(
+            self.p.fslash(), "/some/root/bar_fly1_val/fooval/thefile.$F.jpg"
+        )
 
     def test_path_expand_braced_vars_first(self):
         context = {"FOO": "foo", "FOOBAR": "foobar"}
@@ -302,10 +305,6 @@ class RelativePathCollapseDotsTest(unittest.TestCase):
         self.assertEqual(p.fslash(), "../c/d")
         self.assertEqual(p.all_components, ["..", "c", "d"])
         self.assertEqual(p.depth, 3)
-
-    def test_resolve_leading_relative_dots(self):
-        p = Path("../c/d")
-        self.assertEqual(p.fslash(), "../c/d")
 
     def test_resolve_leading_relative_dots(self):
         p = Path("../../../c/d")
@@ -527,13 +526,48 @@ class MakeRelativeTest(unittest.TestCase):
         base = Path("/a/b/c/d")
         with self.assertRaises(ValueError):
             p.make_relative_to(base)
-        
+
     def test_not_path_is_error(self):
         p = Path("/a/b")
         base = "/a"
         with self.assertRaises(TypeError):
             p.make_relative_to(base)
-        
+
+
+class StatsTest(unittest.TestCase):
+    def setUp(self):
+        return super().setUp()
+
+    @patch("os.stat")
+    @patch("stat.S_ISREG")
+    @patch("stat.S_ISDIR")
+    def test_stat_is_file(self, mock_isdir, mock_isreg, mock_stat):
+        mock_stat_result = type(
+            "MockStatResult", (), {"st_mode": 33206, "st_size": 100}
+        )
+        mock_stat.return_value = mock_stat_result
+        mock_isreg.return_value = True
+        mock_isdir.return_value = False
+        pth = Path("/a/b/c/d.txt")
+        result = pth.stat()
+        self.assertTrue(result["is_file"])
+        self.assertFalse(result["is_dir"])
+        self.assertEqual(result["size"], 100)
+
+    @patch("os.stat")
+    @patch("stat.S_ISREG")
+    @patch("stat.S_ISDIR")
+    def test_stat_is_dir(self, mock_isdir, mock_isreg, mock_stat):
+        mock_stat_result = type("MockStatResult", (), {"st_mode": 16384, "st_size": 0})
+        mock_stat.return_value = mock_stat_result
+        mock_isreg.return_value = False
+        mock_isdir.return_value = True
+        pth = Path("/a/b/c/")
+        result = pth.stat()
+        self.assertFalse(result["is_file"])
+        self.assertTrue(result["is_dir"])
+        self.assertEqual(result["size"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
