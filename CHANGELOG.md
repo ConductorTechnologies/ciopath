@@ -1,3 +1,9 @@
+## Unreleased: 
+
+* 1.1.0-beta.1
+  * adds real_files method to gpath_list, which resolves folders and wildcards to real regular files only
+  * adds stat method to gpath which helps gpath_list to resolve real files
+
 ### Version:1.0.3 -- 09 Dec 2022
 
 * Adds the ability to remove entries from a PathList based on unix-style wildcard patterns. [c7db4ae]
