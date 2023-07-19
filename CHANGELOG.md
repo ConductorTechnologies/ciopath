@@ -1,3 +1,7 @@
+## Version:1.1.0 -- 19 Jul 2023
+
+
+
 ## Unreleased: 
 
 * 1.1.0-beta.1
