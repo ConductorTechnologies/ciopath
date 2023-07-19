@@ -55,7 +55,7 @@ class PathList(object):
 
     def remove(self, *paths):
         """
-        Replace the underlying list with a filtered list. 
+        Replace the underlying list with a filtered list.
 
         No deduplication happens yet and the list is marked dirty.
         """
@@ -105,7 +105,7 @@ class PathList(object):
         if not self._entries:
             return None
 
-        absolute =  list(self._entries)[0].absolute
+        absolute = list(self._entries)[0].absolute
 
         def _all_the_same(rhs):
             return all(n == rhs[0] for n in rhs[1:])
@@ -116,13 +116,11 @@ class PathList(object):
 
         if not len(common):
             return Path("/")
-        elif  common[0].endswith(":"):
+        elif common[0].endswith(":"):
             return Path("/".join(common))
-        elif absolute: 
-            return Path("/"+"/".join(common))
+        elif absolute:
+            return Path("/" + "/".join(common))
         return Path("/".join(common))
-
-       
 
     def glob(self):
         """Glob expansion for entries containing globbable characters.
@@ -134,8 +132,8 @@ class PathList(object):
         characters (*|?|[) to determine whether to attempt a glob.
 
         However, if it looks like a glob, but the glob library can't
-        handle it, then we have to assume it really is a filename with 
-        glob-like characters, and then we just add the literal path 
+        handle it, then we have to assume it really is a filename with
+        glob-like characters, and then we just add the literal path
         unchanged. See the test: test_ignore_invalid_glob().
         """
         self._deduplicate()
@@ -154,6 +152,32 @@ class PathList(object):
         self._clean = False
         self._current = 0
 
+    def real_files(self):
+        """Replace the list with a list of real files.
+
+        We first glob, which gets rid of wildcards.
+        Then we walk the directory tree and add all files we find.
+        Directories are not added.
+        """
+        result = []
+        self.glob()
+        for entry in self._entries:
+            stats = entry.stat()
+            if not stats:
+                continue
+            if stats["is_file"]:
+                result.append(entry)
+            elif stats["is_dir"]:
+                for root, _, files in os.walk(entry.fslash()):
+                    for file_name in files:
+                        file_path = os.path.join(root, file_name)
+                        resolved_path = os.path.realpath(file_path)
+                        result.append(Path(resolved_path))
+
+        self._entries = result
+        self._clean = False
+        self._current = 0
+
     def __iter__(self):
         """Get an iterator to entries.
 
@@ -163,7 +187,6 @@ class PathList(object):
         return iter(self._entries)
 
     def __next__(self):
-
         """Get the next element.
 
         Deduplicate just in time.
@@ -176,7 +199,7 @@ class PathList(object):
             self._current += 1
             return self._entries[prev]
 
-    next = __next__ # Python 2
+    next = __next__  # Python 2
 
     def __len__(self):
         """Get the size of the entry list.
@@ -194,12 +217,12 @@ class PathList(object):
                 continue
             if not os.path.exists(pp):
                 missing.add(path)
-        if  missing:
+        if missing:
             self.remove(*missing)
 
     def remove_pattern(self, *patterns, **kwargs):
         """Remove entries that match the given pattern(s).
-        
+
         A pattern is a unix style wildcard pattern as defined by the fnmatch module.
         *, ?, [seq], [!seq]
 
@@ -208,16 +231,20 @@ class PathList(object):
         "*.bak", "*.tmp"
         "*.bak, *.tmp"
         "*.ext", "*.bak, *.tmp"
-        
+
         """
-        flat_patterns = [item for pattern_str in patterns for item in re.split(', ', pattern_str)]
+        flat_patterns = [
+            item for pattern_str in patterns for item in re.split(", ", pattern_str)
+        ]
 
         matches = PathList()
         for path in self._entries:
             for pattern in flat_patterns:
-                if fnmatch.fnmatch(path.fslash(), pattern) or fnmatch.fnmatch(path.bslash(), pattern):
+                if fnmatch.fnmatch(path.fslash(), pattern) or fnmatch.fnmatch(
+                    path.bslash(), pattern
+                ):
                     matches.add(path)
                     break
-        
+
         if matches:
             self.remove(*matches)

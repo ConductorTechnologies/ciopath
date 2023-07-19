@@ -17,12 +17,13 @@ See test_gpath.py for full behavior.
 """
 
 from future.utils import python_2_unicode_compatible
- 
+
 import os
 import re
+import stat
 
 # https://regex101.com/r/EeOqb4/1/
-RX_PREFIXED_PATH= re.compile(r"^([a-zA-Z]:|\\|\/)[\\\/]+")
+RX_PREFIXED_PATH = re.compile(r"^([a-zA-Z]:|\\|\/)[\\\/]+")
 RX_PREFIX = re.compile(r"^([a-zA-Z]:|\\|\/)")
 
 # this matches env style variables: e.g. $FOO or ${FOO}
@@ -58,7 +59,9 @@ def _normalize_dots(components, absolute=True):
                 pass
             elif c == parentdir:
                 if not len(result):
-                    raise ValueError("Can't resolve components of absolute path due to '..' overflow.")
+                    raise ValueError(
+                        "Can't resolve components of absolute path due to '..' overflow."
+                    )
                 del result[-1]
             else:
                 result.append(c)
@@ -70,25 +73,24 @@ def _normalize_dots(components, absolute=True):
         elif c == parentdir:
             if not len(result) or result[-1] == parentdir:
                 result.append(parentdir)
-            else:    
+            else:
                 del result[-1]
         else:
             result.append(c)
-    
-    if not result: 
-        result="."
-    return result
 
+    if not result:
+        result = "."
+    return result
 
 
 class Path(object):
     def __init__(self, path, **kw):
         """Initialize a generic path.
 
-        If path is a list, then each element will be a component of the path. 
+        If path is a list, then each element will be a component of the path.
         If it's a string then expand context variables.
         Also expand, env vars and user unless explicitly told not to with the
-        no_expand option. 
+        no_expand option.
         """
 
         self._drive_prefix = None
@@ -114,16 +116,15 @@ class Path(object):
                 path = os.path.expanduser(os.path.expandvars(path))
 
             match = RX_PREFIXED_PATH.match(path)
- 
+
             if match:
                 self._drive_prefix = match.group(1).replace("\\", "/")
                 path = RX_PREFIX.sub("", path)
- 
+
             self._absolute = path[0] in ["/", "\\"]
 
             self._components = _normalize_dots(
-                [s for s in re.split("/|\\\\", path) if s],
-                self._absolute
+                [s for s in re.split("/|\\\\", path) if s], self._absolute
             )
 
         self._depth = len(self._components)
@@ -136,7 +137,6 @@ class Path(object):
         if self._absolute:
             result = "{}{}".format(sep, result)
             if with_drive_letter and self._drive_prefix:
-
                 prefix = self._drive_prefix
                 if prefix == "/":
                     prefix = sep
@@ -159,7 +159,7 @@ class Path(object):
 
         We don't check that the start folder is in fact a folder. If you give a file instead you may
         get a result with too many '..' components.
-        
+
         We ignore any drive prefixes. This means paths on 2 different Windows drives are considered
         to be on the same drive. This is not a problem for the purpose of this function.
 
@@ -170,7 +170,7 @@ class Path(object):
 
         if not (self.absolute and start.absolute):
             """If either are relative, then we don't change the path.
-            
+
             It's impossible to know their relationship.
             """
             return
@@ -179,10 +179,14 @@ class Path(object):
         other_components = start._components
 
         if components == other_components:
-             raise ValueError("Paths (without drive prefixes) must be different.")
+            raise ValueError("Paths (without drive prefixes) must be different.")
 
         # remove the common parts
-        while len(components) and len(other_components) and components[0] == other_components[0]:
+        while (
+            len(components)
+            and len(other_components)
+            and components[0] == other_components[0]
+        ):
             components = components[1:]
             other_components = other_components[1:]
 
@@ -195,7 +199,9 @@ class Path(object):
         self._components = components
         self._drive_prefix = None
         self._absolute = False
-        self._depth = len(self._components) # depth is kind of pointless for relative paths. 
+        self._depth = len(
+            self._components
+        )  # depth is kind of pointless for relative paths.
         # TODO: Remove depth altogether
 
     def os_path(self, **kw):
@@ -215,6 +221,19 @@ class Path(object):
     def endswith(self, suffix):
         return self.fslash().endswith(suffix)
 
+    def stat(self):
+        """Return a dict with file stats or None if the file doesn't exist."""
+        try:
+            stat_results = os.stat(self.fslash())
+        except OSError:
+            return None
+        stat_mode = stat_results.st_mode
+        return {
+            "is_file": stat.S_ISREG(stat_mode),
+            "is_dir": stat.S_ISDIR(stat_mode),
+            "size": stat_results.st_size,
+        }
+
     def __len__(self):
         return len(self.fslash())
 
@@ -224,7 +243,7 @@ class Path(object):
         return self.fslash() == rhs.fslash()
 
     def __lt__(self, other):
-        return (self.fslash() < other.fslash())
+        return self.fslash() < other.fslash()
 
     def __hash__(self):
         return hash(self.fslash())

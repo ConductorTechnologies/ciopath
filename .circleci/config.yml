@@ -1,82 +1,258 @@
 version: 2.1
 
 orbs:
-  python: circleci/python@2.0.3
+  python: circleci/python@2.1.1
+  slack: circleci/slack@4.3.1
+
+parameters:
+  dcc_logo:
+    default: "https://downloads.conductortech.com/images/ciopath.png"
+    type: string
+  dcc_full_name:
+    default: "CioPath"
+    type: string
+  nice_name:
+    default: "Conductor Paths"
+    type: string
+
+commands:
+  populate_bashenv:
+    steps:
+      - run:
+          name: Populate Bash Env
+          # The section below creates two text files and reads their contents into BASH_ENV for use in the Slack notification.
+          # * The file changelog_summary.txt contains the last changelog entry.
+          # * The file pypi_version.txt contains the pypi conversion of the semver version.
+          command: |
+            cat ./CHANGELOG.md | awk 'c==2{exit}; c<=1{print; if (/###/){c++}}' | sed '$d' | awk '{printf "%s\\n", $0}'| sed 's/\"/\\"/g' > changelog_summary.txt
+            sed 's/\-rc\./rc/g' VERSION | sed 's/\-beta\./b/g'  | sed 's/\-alpha\./a/g' > pypi_version.txt
+            echo 'export CHANGELOG_SUMMARY="$(cat changelog_summary.txt)" ' >> $BASH_ENV
+            echo 'export PYPI_VERSION="$(cat pypi_version.txt)" ' >> $BASH_ENV
+  run_tests:
+    steps:
+      - run:
+          name: Unit tests
+          # We have to check out a throwaway branch in order to run the tests.
+          command: |
+            git checkout -b test-branch-`git rev-parse --short HEAD`
+            python -m unittest discover -s ./tests -p 'test_*.py'
+  create_pypi_credentials:
+    parameters:
+      index:
+        default: "pypi"
+        type: string
+      password:
+        default: $PROD_PYPI_PASSWORD
+        type: string
+    steps:
+      - run:
+          name: Create pypi credentials
+          command: |
+            echo -e "[<<parameters.index>>]" > ~/.pypirc
+            echo -e "username = conductor" >> ~/.pypirc
+            echo -e "password = <<parameters.password>>" >> ~/.pypirc
+  create_pip_package:
+    steps:
+      - run:
+          name: Create package
+          command: |
+            python setup.py clean --all
+            python setup.py  bdist_wheel
+  upload_to_index:
+    parameters:
+      index:
+        default: "pypi"
+        type: string
+    steps:
+      - run:
+          name: Upload to index
+          command: |
+            twine upload  -r <<parameters.index>>  dist/*
+
+  notify_slack_pass:
+    parameters:
+      emoji:
+        default: ":large_green_circle:"
+        type: string
+      nice_index_name:
+        default: "PyPi"
+        type: string
+      mode:
+        default: "release"
+        type: string
+      extra_pip_install_flags:
+        default: ""
+        type: string
+      index_url:
+        default: "pypi.org"
+        type: string
+    steps:
+      - slack/notify:
+          event: pass
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": " <<parameters.emoji>> <<parameters.nice_index_name>> Deployment Successful!",
+                    "emoji": true
+                    }
+                  },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "A new <<parameters.mode>> of *<< pipeline.parameters.nice_name >>* is available!\n*When*: $(date +'%m/%d/%Y %T')\n*Version*: $(cat VERSION)\n*Author*: ${CIRCLE_USERNAME}\n\n"
+                  },
+                  "accessory": {
+                    "type": "image",
+                    "image_url": "<< pipeline.parameters.dcc_logo >>",
+                    "alt_text": "<< pipeline.parameters.dcc_full_name >>"
+                  }
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "To install:\n```pip install << parameters.extra_pip_install_flags >> ${CIRCLE_PROJECT_REPONAME}==${PYPI_VERSION}```\n"
+                  }
+                },
+                {
+                  "type": "divider"
+                },
+                  {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Recent Changelog Entries*:\n${CHANGELOG_SUMMARY}"
+                  }
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "<< parameters.nice_index_name >>/Changelog",
+                        "emoji": true
+                      },
+                      "value": "click_me_123",
+                      "url": "https://<< parameters.index_url >>/project/${CIRCLE_PROJECT_REPONAME}/"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Github",
+                        "emoji": true
+                      },
+                      "value": "click_me_123",
+                      "url": "https://github.com/ConductorTechnologies/${CIRCLE_PROJECT_REPONAME}/tree/${CIRCLE_BRANCH}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Circle CI",
+                        "emoji": true
+                      },
+                      "value": "click_me_123",
+                      "url": "${CIRCLE_BUILD_URL}"
+                    }
+                  ]
+                }
+              ]
+            }
 
 jobs:
-  test-pypi:
+  test-pypi-beta-release:
     executor: python/default
     steps:
       - checkout
       - python/install-packages:
           pkg-manager: pip
-          pip-dependency-file: requirements.txt
-      - run:
-          command: tox -rvv
-          name: Tox tests
-      - run:
-          command: |
-            echo -e "[testpypi]" > ~/.pypirc
-            echo -e "username = conductor" >> ~/.pypirc
-            echo -e "password = $TEST_PYPI_PASSWORD" >> ~/.pypirc
-          name: Create pypi credentials
-      - run:
-          command: |
-            python setup.py clean --all
-            python setup.py  bdist_wheel   --universal
-          name: Create packages
-      - run:
-          command: |
-            twine upload  -r testpypi  dist/*
-          name: Upload to testpypi
-
-  release-pypi:
+          pip-dependency-file: requirements_dev.txt
+      - run_tests
+      - create_pypi_credentials:
+          index: "testpypi"
+          password: $TEST_PYPI_PASSWORD
+      - create_pip_package
+      - upload_to_index:
+          index: "testpypi"
+      - populate_bashenv
+      - notify_slack_pass:
+          emoji: ":large_orange_circle:"
+          mode: "internal-release"
+          # pip needs to know where to look for this package AND its dependencies.
+          extra_pip_install_flags: " --index-url https://test.pypi.org/simple/  --extra-index-url  https://pypi.org/simple"
+          index_url: "test.pypi.org"
+  pypi-prerelease:
     executor: python/default
     steps:
       - checkout
       - python/install-packages:
           pkg-manager: pip
-          pip-dependency-file: requirements.txt
-      - run:
-          command: tox
-          name: Tox tests
-      - run:
-          command: |
-            echo -e "[pypi]" > ~/.pypirc
-            echo -e "username = conductor" >> ~/.pypirc
-            echo -e "password = $PROD_PYPI_PASSWORD" >> ~/.pypirc
-          name: Create pypi credentials
-      - run:
-          command: |
-            python setup.py clean --all
-            python setup.py  bdist_wheel   --universal
-          name: Create packages
-      - run:
-          command: |
-            twine upload dist/*
-          name: Upload to pypi
-      - add_ssh_keys:
-          fingerprints:
-            - "67:ac:0f:25:18:56:f1:37:a4:6d:9c:67:c0:83:81:9c"
-      - run:
-          command: |
-            version=$(cat VERSION)
-            git tag -a -m "Release tag:${version}" ${version}
-            git push origin ${version}
-          name: Push a release tag
+          pip-dependency-file: requirements_dev.txt
+      - run_tests
+      - create_pypi_credentials
+      - create_pip_package
+      - upload_to_index
+      - populate_bashenv
+      - notify_slack_pass:
+          emoji: ":large_blue_circle:"
+          mode: "pre-release"
+  pypi-release:
+    executor: python/default
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          pip-dependency-file: requirements_dev.txt
+      - run_tests
+      - create_pypi_credentials
+      - create_pip_package
+      - upload_to_index
+      - populate_bashenv
+      - notify_slack_pass:
+          emoji: ":large_green_circle:"
+          mode: "release"
 
 workflows:
   main:
     jobs:
-      - test-pypi:
+      - test-pypi-beta-release:
           context:
             - skulk-context
+            - slack-context
           filters:
+            tags:
+              only: /^\d+\.\d+\.\d+(-beta\.\d+)$/
             branches:
-              ignore: master
-      - release-pypi:
+              ignore: /.*/
+      - pypi-prerelease:
           context:
             - skulk-context
+            - slack-context
           filters:
+            tags:
+              only: /^\d+\.\d+\.\d+(-rc\.\d+)$/
             branches:
-              only: master
+              ignore: /.*/
+      - pypi-release:
+          context:
+            - skulk-context
+            - slack-context
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+$/
+            branches:
+              ignore: /.*/

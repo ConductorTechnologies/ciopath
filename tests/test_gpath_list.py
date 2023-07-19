@@ -2,15 +2,13 @@
 
    isort:skip_file
 """
- 
+
 import sys
 import os
 import unittest
+from unittest import mock
+from unittest.mock import patch
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
 
 SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
 if SRC not in sys.path:
@@ -24,10 +22,12 @@ sys.modules["glob"] = __import__("mocks.glob", fromlist=["dummy"])
 # the real glob because it's already here.
 from ciopath.gpath_list import PathList
 from ciopath.gpath import Path
+
 # from cioseq.sequence import Sequence
 
 # Now import glob because we need to populate it.
-import glob # isort:skip
+import glob  # isort:skip
+
 
 class PathListTest(unittest.TestCase):
     def setUp(self):
@@ -38,50 +38,50 @@ class PathListTest(unittest.TestCase):
         }
 
         self.other_files_on_disk = [
-         '/other/file.0001.exr',
-         '/other/file.0002.exr',
-         '/other/file.0003.exr',
-         '/other/file.0004.exr',
-         '/other/file.0005.exr',
-         '/other/file.0006.exr',
-         '/other/file.0007.exr',
-         '/other/file.0008.exr',
-         '/other/file.0009.exr',
-         '/other/file.0010.exr',
-         '/other/file.0011.exr',
-         '/other/file.0012.exr',
-         '/other/file.0013.exr',
-         '/other/file.0014.exr',
-         '/other/file.0015.exr',
-         '/other/file.0016.exr',
-         '/other/file.0017.exr',
-         '/other/file.0018.exr',
-         '/other/file.0019.exr',
-         '/other/file.0020.exr']
+            "/other/file.0001.exr",
+            "/other/file.0002.exr",
+            "/other/file.0003.exr",
+            "/other/file.0004.exr",
+            "/other/file.0005.exr",
+            "/other/file.0006.exr",
+            "/other/file.0007.exr",
+            "/other/file.0008.exr",
+            "/other/file.0009.exr",
+            "/other/file.0010.exr",
+            "/other/file.0011.exr",
+            "/other/file.0012.exr",
+            "/other/file.0013.exr",
+            "/other/file.0014.exr",
+            "/other/file.0015.exr",
+            "/other/file.0016.exr",
+            "/other/file.0017.exr",
+            "/other/file.0018.exr",
+            "/other/file.0019.exr",
+            "/other/file.0020.exr",
+        ]
 
         self.some_files_on_disk = [
-         '/some/file.0001.exr',
-         '/some/file.0002.exr',
-         '/some/file.0003.exr',
-         '/some/file.0004.exr',
-         '/some/file.0005.exr',
-         '/some/file.0006.exr',
-         '/some/file.0007.exr',
-         '/some/file.0008.exr',
-         '/some/file.0009.exr',
-         '/some/file.0010.exr',
-         '/some/file.0011.exr',
-         '/some/file.0012.exr',
-         '/some/file.0013.exr',
-         '/some/file.0014.exr',
-         '/some/file.0015.exr',
-         '/some/file.0016.exr',
-         '/some/file.0017.exr',
-         '/some/file.0018.exr',
-         '/some/file.0019.exr',
-         '/some/file.0020.exr']
-
-
+            "/some/file.0001.exr",
+            "/some/file.0002.exr",
+            "/some/file.0003.exr",
+            "/some/file.0004.exr",
+            "/some/file.0005.exr",
+            "/some/file.0006.exr",
+            "/some/file.0007.exr",
+            "/some/file.0008.exr",
+            "/some/file.0009.exr",
+            "/some/file.0010.exr",
+            "/some/file.0011.exr",
+            "/some/file.0012.exr",
+            "/some/file.0013.exr",
+            "/some/file.0014.exr",
+            "/some/file.0015.exr",
+            "/some/file.0016.exr",
+            "/some/file.0017.exr",
+            "/some/file.0018.exr",
+            "/some/file.0019.exr",
+            "/some/file.0020.exr",
+        ]
 
     def test_init_empty(self):
         d = PathList()
@@ -106,7 +106,6 @@ class PathListTest(unittest.TestCase):
         d.add("/a/file1", "/a/file2", Path("/a/file3"))
         self.assertEqual(len(d), 3)
 
-
     # remove
     def test_removes_string(self):
         d = PathList()
@@ -119,7 +118,7 @@ class PathListTest(unittest.TestCase):
         d.add("/a/file1", "/a/file2", "/a/file3")
         d.remove(Path("/a/file2"))
         self.assertEqual(len(d), 2)
-        self.assertEqual( list(d)[1],  Path("/a/file3"))
+        self.assertEqual(list(d)[1], Path("/a/file3"))
 
     def test_removes_many(self):
         d = PathList()
@@ -138,14 +137,13 @@ class PathListTest(unittest.TestCase):
         d.add("/a/file1", "/a/file2", "/a/file3", "/a/file2", "/a/file3")
         d.remove("/a/file2")
         self.assertEqual(len(d), 2)
- 
+
     def test_does_not_deduplicate_internally_on_removal(self):
         # deduplication is lazy - happens on access
         d = PathList()
         d.add("/a/file1", "/a/file2", "/a/file3", "/a/file2", "/a/file3")
         d.remove("/a/file2")
         self.assertEqual(len(d._entries), 3)
-
 
     # just want to make sure expansion works here
     # even though it's tested in gpath_test
@@ -304,8 +302,7 @@ class PathListTest(unittest.TestCase):
 
     def test_common_path_when_duplicate_entries_of_single_path(self):
         d = PathList()
-        files = ["/users/joebloggs/tmp/foo.txt",
-                 "/users/joebloggs/tmp/foo.txt"]
+        files = ["/users/joebloggs/tmp/foo.txt", "/users/joebloggs/tmp/foo.txt"]
         d.add(*files)
         self.assertEqual(d.common_path(), Path("/users/joebloggs/tmp/foo.txt"))
 
@@ -386,7 +383,7 @@ class PathListTest(unittest.TestCase):
         d.add(bad_glob)
         d.glob()
         self.assertEqual(list(d)[0].fslash(), bad_glob)
- 
+
     def test_empty_list_is_falsy(self):
         self.assertFalse(PathList())
 
@@ -395,21 +392,18 @@ class PathListTest(unittest.TestCase):
 
 
 class MissingFilesTest(unittest.TestCase):
-
     @staticmethod
     def side_effect(arg):
-        if "missing" in arg: 
+        if "missing" in arg:
             return False
         else:
             return True
 
     def setUp(self):
-
-        patcher = mock.patch('os.path.exists')
+        patcher = mock.patch("os.path.exists")
         self.mock_exists = patcher.start()
         self.mock_exists.side_effect = MissingFilesTest.side_effect
         self.addCleanup(patcher.stop)
-
 
     def test_remove_no_missing_file(self):
         d = PathList()
@@ -429,7 +423,13 @@ class MissingFilesTest(unittest.TestCase):
 
     def test_remove_many_missing_file(self):
         d = PathList()
-        files = ["/tmp/missing.txt", "/tmp/foo.txt", "/tmp/bar.txt", "/tmp/missing2.txt", "/tmp/missing3.txt"]
+        files = [
+            "/tmp/missing.txt",
+            "/tmp/foo.txt",
+            "/tmp/bar.txt",
+            "/tmp/missing2.txt",
+            "/tmp/missing3.txt",
+        ]
         d.add(*files)
         self.assertEqual(len(d), 5)
         d.remove_missing()
@@ -445,25 +445,34 @@ class MissingFilesTest(unittest.TestCase):
 
     def test_remove_missing_when_dups_given(self):
         d = PathList()
-        files = ["/tmp/missing", "/tmp/foo", "/tmp/bar",  "/tmp/foo", "/tmp/missing2", "/tmp/missing"]
+        files = [
+            "/tmp/missing",
+            "/tmp/foo",
+            "/tmp/bar",
+            "/tmp/foo",
+            "/tmp/missing2",
+            "/tmp/missing",
+        ]
         d.add(*files)
         self.assertEqual(len(d), 4)
         d.remove_missing()
         self.assertEqual(len(d), 2)
 
-
     def test_dont_remove_globbable_files(self):
         d = PathList()
-        files = ["/tmp/foo", "/tmp/missing*", "/tmp/missing.[0-9]", "/tmp/missing.????.exr"]
+        files = [
+            "/tmp/foo",
+            "/tmp/missing*",
+            "/tmp/missing.[0-9]",
+            "/tmp/missing.????.exr",
+        ]
         d.add(*files)
         self.assertEqual(len(d), 4)
         d.remove_missing()
         self.assertEqual(len(d), 4)
 
 
-
 class RemovePatternTest(unittest.TestCase):
-
     def test_remove_an_extension(self):
         d = PathList()
         files = ["/tmp/foo.txt", "/tmp/bar.txt", "/tmp/bar.bak"]
@@ -503,7 +512,7 @@ class RemovePatternTest(unittest.TestCase):
         self.assertEqual(len(d), 4)
         d.remove_pattern("/tmp/*")
         self.assertEqual(len(d), 2)
- 
+
     def test_remove_when_pattern_defined_with_backslashes(self):
         d = PathList()
         files = ["/tmp/foo.txt", "/tmp2/bar.txt", "/tmp2/bar.bak", "/tmp/yum.dum"]
@@ -511,7 +520,7 @@ class RemovePatternTest(unittest.TestCase):
         self.assertEqual(len(d), 4)
         d.remove_pattern("*tmp\\*")
         self.assertEqual(len(d), 2)
- 
+
     def test_empty_the_list(self):
         d = PathList()
         files = ["/tmp2/bar.txt", "/tmp2/bar.bak", "/tmp/yum.dum"]
@@ -519,6 +528,35 @@ class RemovePatternTest(unittest.TestCase):
         self.assertEqual(len(d), 3)
         d.remove_pattern("*")
         self.assertEqual(len(d), 0)
- 
+
+
+class RealFilesTest(unittest.TestCase):
+    @patch("os.walk")
+    @patch("os.path.realpath")
+    @patch.object(PathList, "glob")
+    @patch.object(Path, "stat")
+    def test_expands_a_folder(self, mock_stat, mock_glob, mock_realpath, mock_walk):
+        mock_realpath.side_effect = lambda x: f"/real{x}"
+        mock_walk.return_value = [
+            ("/tmp", ["dir1", "dir2"], ["file1.txt", "file2.txt"]),
+            ("/tmp/dir1", [], ["file3.txt", "file4.txt"]),
+            ("/tmp/dir2", [], []),
+        ]
+        mock_stat.return_value = {"is_dir": True, "is_file": False}
+        p = PathList()
+        p.add("/tmp")
+        p.real_files()
+        self.assertEqual(len(p), 4)
+        self.assertEqual(mock_glob.call_count, 1)
+        self.assertIn("/real/tmp/file1.txt", p)
+        self.assertIn("/real/tmp/dir1/file3.txt", p)
+        self.assertNotIn("/tmp", p)
+
+        # ensure it doesn't add files that are already there
+        p.add("/tmp")
+        p.real_files()
+        self.assertEqual(len(p), 4)
+
+
 if __name__ == "__main__":
     unittest.main()
