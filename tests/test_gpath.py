@@ -127,7 +127,9 @@ class MiscPathTest(unittest.TestCase):
 
 class PathExpansionTest(unittest.TestCase):
     def setUp(self):
+
         self.env = {
+            "USERPROFILE": "/users/joebloggs",
             "HOME": "/users/joebloggs",
             "SHOT": "/metropolis/shot01",
             "DEPT": "texturing",
