@@ -24,8 +24,8 @@ commands:
           # * The file changelog_summary.txt contains the last changelog entry.
           # * The file pypi_version.txt contains the pypi conversion of the semver version.
           command: |
-            cat ./CHANGELOG.md | awk 'c==2{exit}; c<=1{print; if (/###/){c++}}' | sed '$d' | awk '{printf "%s\\n", $0}'| sed 's/\"/\\"/g' > changelog_summary.txt
-            sed 's/\-rc\./rc/g' VERSION | sed 's/\-beta\./b/g'  | sed 's/\-alpha\./a/g' > pypi_version.txt
+            python scripts/changelog_parser.py ./CHANGELOG.md > changelog_summary.txt
+            python scripts/changelog_parser.py ./VERSION >  pypi_version.txt
             echo 'export CHANGELOG_SUMMARY="$(cat changelog_summary.txt)" ' >> $BASH_ENV
             echo 'export PYPI_VERSION="$(cat pypi_version.txt)" ' >> $BASH_ENV
   run_tests:
@@ -77,8 +77,8 @@ commands:
       nice_index_name:
         default: "PyPi"
         type: string
-      mode:
-        default: "release"
+      audience:
+        default: "Full release"
         type: string
       extra_pip_install_flags:
         default: ""
@@ -96,15 +96,15 @@ commands:
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": " <<parameters.emoji>> <<parameters.nice_index_name>> Deployment Successful!",
+                    "text": " <<parameters.emoji>> << pipeline.parameters.nice_name >> $(cat VERSION) is available!",
                     "emoji": true
-                    }
-                  },
+                  }
+                },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "A new <<parameters.mode>> of *<< pipeline.parameters.nice_name >>* is available!\n*When*: $(date +'%m/%d/%Y %T')\n*Version*: $(cat VERSION)\n*Author*: ${CIRCLE_USERNAME}\n\n"
+              	    "text": "*Audience*: << parameters.audience >>\n*Tag*: ${CIRCLE_TAG}\n*Date*: $(date +'%d %B %Y %T')\n*Author*: ${CIRCLE_USERNAME}"
                   },
                   "accessory": {
                     "type": "image",
@@ -116,53 +116,74 @@ commands:
                   "type": "divider"
                 },
                 {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "Installation"
+                  }
+                },
+                {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "To install:\n```pip install << parameters.extra_pip_install_flags >> ${CIRCLE_PROJECT_REPONAME}==${PYPI_VERSION}```\n"
+                    "text": "```python -m pip install << parameters.extra_pip_install_flags >> ${CIRCLE_PROJECT_REPONAME}==${PYPI_VERSION}```"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Note*: If `python` is not found, try `python3`."
                   }
                 },
                 {
                   "type": "divider"
                 },
-                  {
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "Recent changes"
+                  }
+                },
+                {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Recent Changelog Entries*:\n${CHANGELOG_SUMMARY}"
+                    "text": "${CHANGELOG_SUMMARY}"
                   }
                 },
                 {
                   "type": "divider"
                 },
-                {
+                 {
                   "type": "actions",
                   "elements": [
                     {
                       "type": "button",
                       "text": {
                         "type": "plain_text",
-                        "text": "<< parameters.nice_index_name >>/Changelog",
+                        "text": "<< parameters.nice_index_name >>",
                         "emoji": true
                       },
                       "value": "click_me_123",
-                      "url": "https://<< parameters.index_url >>/project/${CIRCLE_PROJECT_REPONAME}/"
+                      "url": "https://<< parameters.index_url >>/project/${CIRCLE_PROJECT_REPONAME}/${CIRCLE_TAG}/"
                     },
                     {
                       "type": "button",
                       "text": {
                         "type": "plain_text",
-                        "text": "Github",
+                        "text": "GitHub",
                         "emoji": true
                       },
                       "value": "click_me_123",
-                      "url": "https://github.com/ConductorTechnologies/${CIRCLE_PROJECT_REPONAME}/tree/${CIRCLE_BRANCH}"
+                      "url": "https://github.com/ConductorTechnologies/${CIRCLE_PROJECT_REPONAME}/tree/${CIRCLE_TAG}"
                     },
                     {
                       "type": "button",
                       "text": {
                         "type": "plain_text",
-                        "text": "Circle CI",
+                        "text": "CircleCI",
                         "emoji": true
                       },
                       "value": "click_me_123",
@@ -172,7 +193,6 @@ commands:
                 }
               ]
             }
-
 jobs:
   test-pypi-beta-release:
     executor: python/default
@@ -180,7 +200,7 @@ jobs:
       - checkout
       - python/install-packages:
           pkg-manager: pip
-          pip-dependency-file: requirements_dev.txt
+          pip-dependency-file: requirements.txt
       - run_tests
       - create_pypi_credentials:
           index: "testpypi"
@@ -190,8 +210,8 @@ jobs:
           index: "testpypi"
       - populate_bashenv
       - notify_slack_pass:
-          emoji: ":large_orange_circle:"
-          mode: "internal-release"
+          emoji: ":large_purple_circle:"
+          audience: "Internal testing"
           # pip needs to know where to look for this package AND its dependencies.
           extra_pip_install_flags: " --index-url https://test.pypi.org/simple/  --extra-index-url  https://pypi.org/simple"
           index_url: "test.pypi.org"
@@ -201,7 +221,7 @@ jobs:
       - checkout
       - python/install-packages:
           pkg-manager: pip
-          pip-dependency-file: requirements_dev.txt
+          pip-dependency-file: requirements.txt
       - run_tests
       - create_pypi_credentials
       - create_pip_package
@@ -209,14 +229,14 @@ jobs:
       - populate_bashenv
       - notify_slack_pass:
           emoji: ":large_blue_circle:"
-          mode: "pre-release"
+          audience: "Release candidate"
   pypi-release:
     executor: python/default
     steps:
       - checkout
       - python/install-packages:
           pkg-manager: pip
-          pip-dependency-file: requirements_dev.txt
+          pip-dependency-file: requirements.txt
       - run_tests
       - create_pypi_credentials
       - create_pip_package
@@ -224,20 +244,11 @@ jobs:
       - populate_bashenv
       - notify_slack_pass:
           emoji: ":large_green_circle:"
-          mode: "release"
+          audience: "Full release"
 
 workflows:
   main:
     jobs:
-      - test-pypi-beta-release:
-          context:
-            - skulk-context
-            - slack-context
-          filters:
-            tags:
-              only: /^\d+\.\d+\.\d+(-beta\.\d+)$/
-            branches:
-              ignore: /.*/
       - pypi-prerelease:
           context:
             - skulk-context
@@ -254,5 +265,14 @@ workflows:
           filters:
             tags:
               only: /^\d+\.\d+\.\d+$/
+            branches:
+              ignore: /.*/
+      - test-pypi-beta-release:
+          context:
+            - skulk-context
+            - slack-context
+          filters:
+            tags:
+              only: /^\d+\.\d+\.\d+(-beta\.\d+)$/
             branches:
               ignore: /.*/
