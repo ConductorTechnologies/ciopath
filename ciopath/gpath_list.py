@@ -171,8 +171,7 @@ class PathList(object):
                 for root, _, files in os.walk(entry.fslash()):
                     for file_name in files:
                         file_path = os.path.join(root, file_name)
-                        resolved_path = os.path.realpath(file_path)
-                        result.append(Path(resolved_path))
+                        result.append(Path(file_path))
 
         self._entries = result
         self._clean = False
