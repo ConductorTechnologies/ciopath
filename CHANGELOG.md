@@ -1,3 +1,7 @@
+## Version:1.1.1 -- 31 Jul 2023
+
+* Remove the use of os.path.realpath to resolve symlinks, since it can make DCC asset paths diverge from the paths the uploader sees. (#14)
+
 ## Version:1.1.0 -- 19 Jul 2023
 
 * Adds real_files method to gpath_list, which resolves folders and wildcards to real regular files only. Also adds a stat method to gpath which helps gpath_list to resolve real files as mentioned above.
