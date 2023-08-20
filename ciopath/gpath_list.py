@@ -158,12 +158,16 @@ class PathList(object):
         We first glob, which gets rid of wildcards.
         Then we walk the directory tree and add all files we find.
         Directories are not added.
+
+        We return a list of missing files, which is useful for error reporting.
         """
         result = []
+        missing = []
         self.glob()
         for entry in self._entries:
             stats = entry.stat()
             if not stats:
+                missing.append(entry.fslash())
                 continue
             if stats["is_file"]:
                 result.append(entry)
@@ -176,6 +180,7 @@ class PathList(object):
         self._entries = result
         self._clean = False
         self._current = 0
+        return missing
 
     def __iter__(self):
         """Get an iterator to entries.
