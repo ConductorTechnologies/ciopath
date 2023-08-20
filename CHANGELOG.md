@@ -1,3 +1,6 @@
+## Version:1.1.2 -- 19 Aug 2023
+
+The gpath_list.real_files method now returns missing files that were in the list.
 ## Version:1.1.1 -- 31 Jul 2023
 
 * Remove the use of os.path.realpath to resolve symlinks, since it can make DCC asset paths diverge from the paths the uploader sees. (#14)
