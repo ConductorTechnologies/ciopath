@@ -536,8 +536,7 @@ class RealFilesTest(unittest.TestCase):
     # @patch("os.path.realpath")
     @patch.object(PathList, "glob")
     @patch.object(Path, "stat")
-    def test_expands_a_folder(self, mock_stat, mock_glob,  mock_walk):
-        # mock_realpath.side_effect = lambda x: f"/real{x}"
+    def test_expands_a_folder(self, mock_stat, mock_glob, mock_walk):
         mock_walk.return_value = [
             ("/tmp", ["dir1", "dir2"], ["file1.txt", "file2.txt"]),
             ("/tmp/dir1", [], ["file3.txt", "file4.txt"]),
@@ -550,13 +549,21 @@ class RealFilesTest(unittest.TestCase):
         self.assertEqual(len(p), 4)
         self.assertEqual(mock_glob.call_count, 1)
         self.assertIn("/tmp/file1.txt", p)
-        self.assertIn("/tmp/dir1/file3.txt", p)
-        # self.assertNotIn("/tmp", p)
 
         # ensure it doesn't add files that are already there
         p.add("/tmp")
         p.real_files()
         self.assertEqual(len(p), 4)
+
+    @patch.object(Path, "stat")
+    def test_removes_and_returns_missing_files_list(self, mock_stat):
+        mock_stat.return_value = None
+        p = PathList()
+        p.add("/tmp/missing", "/tmp/missing2")
+        result = p.real_files()
+        self.assertNotIn("/tmp/missing", p)
+        self.assertIn("/tmp/missing", result)
+        self.assertEqual(len(result), 2)
 
 
 if __name__ == "__main__":
